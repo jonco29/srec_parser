@@ -1,0 +1,7 @@
+.*.swp
+a.out
+Debug
+debug
+*.o
+j.c
+srec2c
