@@ -101,6 +101,9 @@ bool SRecordParser::GetByte
 )
 {
    unsigned char  b1, b2;
+   char jc = **s;
+   //jc &0xff;
+   //std::cout << jc << " ";
 
    if ( GetNibble( s, &b1, lineNum, label ) 
    &&   GetNibble( s, &b2, lineNum, label ))
@@ -223,7 +226,7 @@ bool SRecordParser::ParseFile( const char *fileName )
 bool SRecordParser::ParseFile( FILE *fs )
 {
    unsigned lineNum = 0;
-   char     line[ 100 ];
+   char     line[ 200 ];
 
    while ( fgets( line, sizeof( line ), fs ) != NULL )
    {
@@ -377,6 +380,7 @@ bool SRecordParser::ParseLine( unsigned lineNum, const char *line )
       }
    }
 
+   //std::cout << std::endl;
    return true;
 }
 
