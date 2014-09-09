@@ -1,7 +1,8 @@
-.*.swp
+.*.sw*
 a.out
 Debug
 debug
 *.o
 j.c
 srec2c
+srec2mem

@@ -1,5 +1,7 @@
 OBJECTS = \
-		  srec.o
+		  srec.o \
+		  ucryptr_interface.o
+
 
 
 all: srec2c srec2mem jonathan
@@ -12,6 +14,7 @@ srec2mem: srec2mem.o
 
 srec2c.o: SRecMem.h srec.h $(OBJECTS) 
 srec2mem.o: SRecMem.h $(OBJECTS) 
+ucryptr_interface.o: ucryptr_interface.h
 
 jonathan:
 	@echo "hello there"
