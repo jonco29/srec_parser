@@ -86,8 +86,14 @@ UCRYPTR_PAYLOAD_t *uCryptrInterface::formatData(unsigned char* data, unsigned sh
 
 bool uCryptrInterface::sendMACEboot()
 {
-    unsigned char data[] = {'M', 'A', 'C', 'E', 'b', 'o', 'o', 't'};
-    unsigned int len = 8;
+    unsigned char data[] = {'M', 'A', 'C', 'E', 'b', 'o', 'o', 't', '\r'};
+    unsigned int len = 9;
+    return sendRaw(data,len);
+}
+bool uCryptrInterface::sendMACEDownloadComplete()
+{
+    unsigned char data[] = {MACE_DOWNLOAD_COMPLETE, '\r'};
+    unsigned int len = 2;
     return sendRaw(data,len);
 }
 
@@ -115,15 +121,15 @@ bool uCryptrInterface::sendRaw(unsigned char* data, unsigned int len)
 {
     int fd  = 0;
     int ret = 0;
-    unsigned int tag_id = 0;
     int i = 0;
     bool status = false;
-    unsigned char *outData = new unsigned char[len + 1];
-    memcpy(outData, data, len);
-    outData[len] = '0';
-    outData[len+1] = '\r';
-    len++;
-    len++;
+    unsigned char* outData = data;
+    // unsigned char *outData = new unsigned char[len + 1];
+    // memcpy(outData, data, len);
+    // outData[len] = '0';
+    // outData[len+1] = '\r';
+    // len++;
+    // len++;
 
     cleanupReadData();
 
@@ -165,7 +171,7 @@ bool uCryptrInterface::sendRaw(unsigned char* data, unsigned int len)
             }
         }
     }
-    delete outData;
+    //delete outData;
 
     return status;
 }

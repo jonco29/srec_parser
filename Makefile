@@ -1,20 +1,24 @@
 OBJECTS = \
 		  srec.o \
-		  ucryptr_interface.o
+		  ucryptr_interface.o \
+		  srec2mem.o
 
 
-
-all: srec2c srec2mem jonathan
+all: srec2c srec2mem flashloader jonathan
 
 srec2c: srec2c.o 
 	g++ -g $(OBJECTS) $< -o $@
 
-srec2mem: srec2mem.o  
+srec2mem: srec2memTester.o  
+	g++ -g $(OBJECTS) $< -o $@
+
+flashloader: flashloader.o  srec2mem.o ucryptr_interface.o
 	g++ -g $(OBJECTS) $< -o $@
 
 srec2c.o: SRecMem.h srec.h $(OBJECTS) 
 srec2mem.o: SRecMem.h $(OBJECTS) 
 ucryptr_interface.o: ucryptr_interface.h
+flashloader.o: ucryptr_interface.h
 
 jonathan:
 	@echo "hello there"

@@ -27,6 +27,8 @@ typedef struct PACKED
 #define SLEEP_FOR 1
 #define UC_READ_LEN 1024
 
+#define MACE_DOWNLOAD_COMPLETE  0x59
+
 
 
 class uCryptrInterface 
@@ -38,10 +40,11 @@ class uCryptrInterface
         bool isReady();
         UCRYPTR_PAYLOAD_t *formatData(unsigned char* data, unsigned short len, unsigned char opcode);
         bool sendMACEboot();
+        bool sendMACEDownloadComplete();
         bool send(UCRYPTR_PAYLOAD_t* data);
         unsigned char* getResponse();
-    private:
         bool sendRaw(unsigned char* data, unsigned int len);
+    private:
         unsigned char* readData;
         bool rxData();
         void cleanupReadData();
