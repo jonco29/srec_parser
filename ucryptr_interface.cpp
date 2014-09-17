@@ -85,8 +85,8 @@ char *uCryptrInterface::formatData (unsigned char* data, int *len, unsigned char
         asciiPayload[j++] = asciiVal(hi);
         asciiPayload[j++] = asciiVal(low);
     }
-    asciiPayload[j++] = 0;
     asciiPayload[j++] = '\r';
+    asciiPayload[j++] = '\n';
     *len = j;
 
     return asciiPayload;

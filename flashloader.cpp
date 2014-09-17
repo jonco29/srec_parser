@@ -15,8 +15,7 @@ int main (int argc, char** argv)
 {
     FILE *fstream;
     uCryptrInterface uc;
-    //if (argc != 3)
-    if (argc != 2)
+    if (argc != 3)
     {
         cout << "usage: " << argv[0] << " <flashloader.srec> <bootblock.srec>" << endl;
         return 1;
