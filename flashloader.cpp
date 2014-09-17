@@ -21,14 +21,6 @@ int main (int argc, char** argv)
         return 1;
     }
 
-    // if (( fstream = fopen (argv[1], "rt")) == NULL)
-    // {
-    //     cout << "usage: " << argv[0] << " <flashloader.srec> <bootblock.srec>, but file: " << argv[1] << " cannot be opened" << endl;
-    //     return 1;
-    // }
-    // char line[400] = {0xaa};
-
-    // int i = 0;
 
     if (uc.isReady())
     {
@@ -46,14 +38,6 @@ int main (int argc, char** argv)
 
 
     doFlashLoader(argv[1], uc);
-    //while (fgets( line, sizeof(line), fstream) != NULL)
-    //{
-    //    cout << "line: " << i++ << " (" << strlen(line) << ")\t" << line ;
-    //    uc.sendRaw((unsigned char*)line, strlen(line));
-    //}
-    //fclose (fstream);
-
-    uc.sendMACEDownloadComplete();
 
 
     // now do the boot block
@@ -81,12 +65,6 @@ bool doFlashLoader(char* arg, uCryptrInterface &uc)
         }
         std::cout << std::endl;
 
-        // outData = new unsigned char[len + 4];
-        // outData[0] = 0x00;
-        // outData[1] = len+1;
-        // memcpy(&outData[2], data, len);
-        // outData[len+2] = 0;
-        // outData[len+3] = '\r';
         uc.sendRaw((unsigned char*)asdf, len);
 
         delete outData;
@@ -97,6 +75,7 @@ bool doFlashLoader(char* arg, uCryptrInterface &uc)
         data = 0;
         len = srecMem.getNextData(&data, reqLen);
     }
+    uc.sendMACEDownloadComplete();
 }
 
 bool doBootBlock(char* arg, uCryptrInterface &uc)
