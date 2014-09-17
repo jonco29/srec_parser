@@ -31,18 +31,19 @@ int main (int argc, char** argv)
 
     // int i = 0;
 
-    // if (uc.isReady())
-    // {
-    //       cout << "uCryptR is ready........." << endl;
-    //     if (uc.sendMACEboot() == true)
-    //     {
-    //         cout << "MACEboot sent........." << endl;
-    //     }
-    // }
-    // else
-    // {
-    //     cout << "uCryptR is NOT ready........." << endl;
-    // }
+    if (uc.isReady())
+    {
+          cout << "uCryptR is ready........." << endl;
+        if (uc.sendMACEboot() == true)
+        {
+            cout << "MACEboot sent........." << endl;
+        }
+    }
+    else
+    {
+        cout << "uCryptR is NOT ready........." << endl;
+        return 1;
+    }
 
 
     doFlashLoader(argv[1], uc);
@@ -75,24 +76,19 @@ bool doFlashLoader(char* arg, uCryptrInterface &uc)
         int i;
         char* asdf = uc.formatData(data, &len);
 
-        // printf("%c", asdf[0]);
-        // printf("%c", asdf[1]);
-
         for (i = 0; i < len; i++)
         {
-            //std::cout << std::hex << data[i] ;
-            //printf("%02X", data[i]);
             printf("%c", asdf[i]);
         }
         std::cout << std::endl;
 
-        outData = new unsigned char[len + 4];
-        outData[0] = 0x00;
-        outData[1] = len+1;
-        memcpy(&outData[2], data, len);
-        outData[len+2] = 0;
-        outData[len+3] = '\r';
-        //uc.sendRaw((unsigned char*)outData, len+4);
+        // outData = new unsigned char[len + 4];
+        // outData[0] = 0x00;
+        // outData[1] = len+1;
+        // memcpy(&outData[2], data, len);
+        // outData[len+2] = 0;
+        // outData[len+3] = '\r';
+        uc.sendRaw((unsigned char*)asdf, len);
 
         delete outData;
         outData = 0;
