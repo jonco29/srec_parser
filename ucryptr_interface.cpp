@@ -56,32 +56,40 @@ bool uCryptrInterface::isReady()
     return return_status;
 }
 
-// typedef struct PACKED
-// {
-//     unsigned char   opcode;
-//     unsigned char   type;
-//     unsigned char   length[2];
-//     unsigned char   index[8];
-//     unsigned char   data[1];
-// } UCRYPTR_PAYLOAD_t;
-
-UCRYPTR_PAYLOAD_t *uCryptrInterface::formatData(unsigned char* data, unsigned short len, unsigned char opcode)
+char *uCryptrInterface::formatData (unsigned char* data, int *len, unsigned char opcode )
 {
-    UCRYPTR_PAYLOAD_t* payload = (UCRYPTR_PAYLOAD_t*)new unsigned char[len + sizeof(UCRYPTR_PAYLOAD_t)];
-    char asciiLen[2] = {0};
+    // first setup a ucryptr_payload in hex values, then we'll fluff it up to ascii
+    //
+    int payloadSize = *len + sizeof(UCRYPTR_PAYLOAD_t);
+    UCRYPTR_PAYLOAD_t* payload = (UCRYPTR_PAYLOAD_t*)new unsigned char[payloadSize];
+    payload->opcode = 'S';
+    payload->type = 3;
+    payload->length = *len + 4 + 1;                      // data len + addr len + crc len
+    memset(payload->addr, 0, 4);
+    memcpy(payload->data, data, *len);
+    payload->data[*len] = 0;
+    char *asciiPayload = new char[payloadSize * 2];
+    unsigned char* payloadPtr = (unsigned char*)payload;
 
+    unsigned char* ptr = (unsigned char*)payload;
+    int i = 0;
+    int j = 0;
 
-    hex2ascii((unsigned char)len/2 + 5, asciiLen);
-    
-    payload->opcode = opcode;
-    payload->type = '3';
-    //payload->length = (len << 8 | len >> 8);
-    //payload->length = len;
-    payload->length[0] = asciiLen[0];
-    payload->length[1] = asciiLen[1];
-    memcpy(payload->data, data, len);
+    asciiPayload[i] = ptr[i];
+    i++;
+    asciiPayload[i] = '3';
+    for (i = 2, j = 2; i < payloadSize; i++)
+    {
+        int hi = ptr[i] / 16;
+        int low = ptr[i] % 16;
+        asciiPayload[j++] = asciiVal(hi);
+        asciiPayload[j++] = asciiVal(low);
+    }
+    asciiPayload[j++] = 0;
+    asciiPayload[j++] = '\r';
+    *len = j;
 
-    return payload;
+    return asciiPayload;
 }
 
 bool uCryptrInterface::sendMACEboot()
@@ -100,20 +108,6 @@ bool uCryptrInterface::sendMACEDownloadComplete()
 bool uCryptrInterface::send(UCRYPTR_PAYLOAD_t* data)
 {
     bool status = false;
-    unsigned char len = 0;
-
-    if (data != 0)
-    {
-        len = ascii2hex(data->length);
-        len -= 5;
-        len *= 2;
-        //len = data->length;
-        //len = (len << 8|len >> 8);
-        //len &= 0xffff;
-        len += sizeof(UCRYPTR_PAYLOAD_t) -1;
-        //len = data->length + sizeof(UCRYPTR_PAYLOAD_t) -1;
-        status = sendRaw((unsigned char* )data, len);
-    }
     return status;
 }
 
@@ -124,12 +118,6 @@ bool uCryptrInterface::sendRaw(unsigned char* data, unsigned int len)
     int i = 0;
     bool status = false;
     unsigned char* outData = data;
-    // unsigned char *outData = new unsigned char[len + 1];
-    // memcpy(outData, data, len);
-    // outData[len] = '0';
-    // outData[len+1] = '\r';
-    // len++;
-    // len++;
 
     cleanupReadData();
 
@@ -226,13 +214,6 @@ bool uCryptrInterface::rxData()
     return status;
 }
 
-void uCryptrInterface::hex2ascii(unsigned char val, char* data)
-{
-    int hi = val/16;
-    int low = val%16;
-    data[0] = asciiVal(hi);
-    data[1] = asciiVal(low);
-}
 char uCryptrInterface::asciiVal(unsigned char a)
 {
     if (a >= 0 && a <= 9)
@@ -249,39 +230,4 @@ char uCryptrInterface::asciiVal(unsigned char a)
         a = 0;
     }
     return (char)a;
-}
-unsigned char uCryptrInterface::ascii2hex(unsigned char* data)
-{
-    int shiftVal = 4;
-    const int shift = 4;
-    int i;
-    int val = 0;
-    int tmp;
-    for (i = 0; i < 2; i++)
-    {
-        tmp = 0;
-        tmp = hexVal(data[i]);
-        tmp <<= shiftVal;
-        val |= tmp;
-        shiftVal -= shift;
-    }
-    return (unsigned char)val;
-}
-unsigned char uCryptrInterface::hexVal(char a)
-{
-    int val = 0;
-    if (a >= '0' && a <= '9')
-    {
-        val = a - '0';
-    }
-    else if (a >= 'A' && a <= 'F')
-    {
-        val = a - 'A';
-        val += 0xa;
-    }
-    else
-    {
-        val = 0;
-    }
-    return val;
 }

@@ -51,53 +51,53 @@
 
 int test (const char* arg)
 {
-    unsigned char *data = 0;
-    int len = 0;
-    const int reqLen = 48;
-    SRecord2Mem srecMem(arg);
-    //srecMem.ParseFile( srecMem.getFile() );
-    std::cout << "the length of the srec is: " << srecMem.getSrecLength() << std::endl;
-    uCryptrInterface uc;
+    // unsigned char *data = 0;
+    // int len = 0;
+    // const int reqLen = 48;
+    // SRecord2Mem srecMem(arg);
+    // //srecMem.ParseFile( srecMem.getFile() );
+    // std::cout << "the length of the srec is: " << srecMem.getSrecLength() << std::endl;
+    // uCryptrInterface uc;
 
-    if (uc.isReady())
-    {
-        std::cout << "uCryptR is ready........." << std::endl;
-        if (uc.sendMACEboot() == true)
-        {
-            std::cout << "MACEboot sent........." << std::endl;
-        }
-    }
-    else
-    {
-        std::cout << "uCryptR is NOT ready........." << std::endl;
-    }
+    // if (uc.isReady())
+    // {
+    //     std::cout << "uCryptR is ready........." << std::endl;
+    //     if (uc.sendMACEboot() == true)
+    //     {
+    //         std::cout << "MACEboot sent........." << std::endl;
+    //     }
+    // }
+    // else
+    // {
+    //     std::cout << "uCryptR is NOT ready........." << std::endl;
+    // }
  
 
-    len = srecMem.getNextData(&data, reqLen);
-    while (len != 0)
-    {
-        int i;
-        for (i = 0; i < len; i++)
-        {
-            //std::cout << std::hex << data[i] ;
-            printf("%02X", data[i]);
-        }
-        std::cout << std::endl;
+    // len = srecMem.getNextData(&data, reqLen);
+    // while (len != 0)
+    // {
+    //     int i;
+    //     for (i = 0; i < len; i++)
+    //     {
+    //         //std::cout << std::hex << data[i] ;
+    //         printf("%02X", data[i]);
+    //     }
+    //     std::cout << std::endl;
 
-        UCRYPTR_PAYLOAD_t* uc_payload = uc.formatData(data, len, 0x53);
-        if (uc.send(uc_payload))
-        {
-            std::cout << "send success" << std::endl;
-        }
-        else
-        {
-            std::cout << "send failed" << std::endl;
-        }
-                
-        delete data;
-        data = 0;
-        len = srecMem.getNextData(&data, reqLen);
-    }
+    //     UCRYPTR_PAYLOAD_t* uc_payload = uc.formatData(data, len, 0x53);
+    //     if (uc.send(uc_payload))
+    //     {
+    //         std::cout << "send success" << std::endl;
+    //     }
+    //     else
+    //     {
+    //         std::cout << "send failed" << std::endl;
+    //     }
+    //             
+    //     delete data;
+    //     data = 0;
+    //     len = srecMem.getNextData(&data, reqLen);
+    // }
 }
 int main( int argc, char **argv )
 {

@@ -15,8 +15,8 @@ typedef struct PACKED
 {
     unsigned char   opcode;
     unsigned char   type;
-    unsigned char   length[2];
-    unsigned char   index[8];
+    unsigned char   length;
+    unsigned char   addr[4];
     unsigned char   data[1];
 } UCRYPTR_PAYLOAD_t;
 
@@ -38,7 +38,7 @@ class uCryptrInterface
         ~uCryptrInterface() {};
 
         bool isReady();
-        UCRYPTR_PAYLOAD_t *formatData(unsigned char* data, unsigned short len, unsigned char opcode);
+        char *formatData(unsigned char* data, int *len, unsigned char opcode = 'S');
         bool sendMACEboot();
         bool sendMACEDownloadComplete();
         bool send(UCRYPTR_PAYLOAD_t* data);
@@ -48,10 +48,7 @@ class uCryptrInterface
         unsigned char* readData;
         bool rxData();
         void cleanupReadData();
-        void hex2ascii(unsigned char val, char* data);
         char asciiVal(unsigned char val);
-        unsigned char ascii2hex(unsigned char* data);
-        unsigned char hexVal(char val);
 
 };
 

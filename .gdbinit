@@ -1,7 +1,8 @@
 ## to use this, heed the gdb output about putting the safe auto load in your
 ## ~/.gdbinit
 #set args mace_factory_pre.srec j.c jonathan
-set args  umace_flash_loader.signed.axf.srec boot_block.signed.enc.srec
+#set args  umace_flash_loader.signed.axf.srec boot_block.signed.enc.srec
+set args  mace_all_pre.srec
 
 set output-radix 16
 
@@ -11,6 +12,7 @@ set output-radix 16
 ## b uCryptrInterface::send
 ## b srec2mem.cpp:207
 ## b uCryptrInterface::formatData
+b doFlashLoader
 b doBootBlock
 
 
