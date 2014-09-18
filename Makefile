@@ -3,7 +3,8 @@ OBJECTS = \
 		  srec.o \
 		  ucryptr_interface.o \
 		  srec2mem.o \
-		  combinedSrec2mem.o
+		  combinedSrec2mem.o \
+		  MaceBlob.o
 
 
 all: srec2c srec2mem flashloader combinedSrec2mem jonathan
@@ -25,9 +26,10 @@ srec2mem.o: SRecMem.h $(OBJECTS)
 combinedSrec2mem.o:  SRecMem.h $(OBJECTS) 
 ucryptr_interface.o: ucryptr_interface.h
 flashloader.o: ucryptr_interface.h
+MaceBlob.o: MaceBlob.h
 
 jonathan:
-	$(GCC) --version
+	#$(GCC) --version
 	@echo "hello there"
 
 clean:

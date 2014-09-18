@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <vector>
 
 #include <string.h>
 #include <stdlib.h>
@@ -29,6 +30,7 @@
 #include "combinedSrec2mem.h"
 #include "ucryptr_interface.h"
 
+using namespace std;
 /* ---- Public Variables ------------------------------------------------- */
 /* ---- Private Constants and Types -------------------------------------- */
 
@@ -63,7 +65,9 @@ CombinedSRecord2Mem::CombinedSRecord2Mem(const char* fileName)
     file(0),
     dataArray(0),
     currentDataOffset(0),
-    dataArraySize(32)
+    dataArraySize(32),
+    combinedSrecValidated(false),
+    combinedSrecParsed(false)
 {
     if (openFile(fileName))
     {
@@ -73,18 +77,10 @@ CombinedSRecord2Mem::CombinedSRecord2Mem(const char* fileName)
         // 
         char line[1000];
         unsigned int lineNum = 1;
-        if (fgets(line, sizeof(line), file) != NULL)
+        while ((combinedSrecValidated == false) && (fgets( line, sizeof(line), file) != NULL))
         {
             ParseLine(lineNum, line);
         }
-
-        if (fgets(line, sizeof(line), file) != NULL)
-        {
-            ParseLine(lineNum, line);
-        }
-        return;
-
-
 
         ParseFile(file);
         fclose(file);
@@ -115,17 +111,77 @@ CombinedSRecord2Mem::~CombinedSRecord2Mem()
 
 bool  CombinedSRecord2Mem::Data( const SRecordData *sRecData )
 {
+    const unsigned char combinedSrecKey[] = { 0x41, 0x42, 0x43, 0x44, 0x43, 0x46, 0x57, 0x49};
     if (sRecData != NULL)
     {
-        if ((currentDataOffset + sRecData->m_dataLen) < dataArraySize)
+        if (combinedSrecValidated == false)
         {
-            memcpy(&dataArray[currentDataOffset], sRecData->m_data, sRecData->m_dataLen);
-            currentDataOffset += sRecData->m_dataLen;
+            if (memcmp(combinedSrecKey, sRecData->m_data, sizeof(combinedSrecKey)) == 0)
+            {
+                combinedSrecValidated = true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else if (combinedSrecParsed == false)
+        {
+            unsigned char numImages = sRecData->m_data[0];
+            int i;
+            int j;
+            int dataIndex = 1;
+            unsigned int addr;
+            for (i = 0; i < numImages; i++)
+            {
+                addr = sRecData->m_addr & 0xfff00000;
+                addr |= (sRecData->m_data[dataIndex++] << 24);
+                addr |= (sRecData->m_data[dataIndex++] << 16);
+                addr |= (sRecData->m_data[dataIndex++] << 8 );
+                addr |= (sRecData->m_data[dataIndex++] << 0 );
+                printf ("the address of image #%d is %08X\n", i+1, addr);
+                images.push_back(CombinedSrecImageData(addr));
+            }
+            combinedSrecParsed = true;
+
+            // now put the next addresses in the vector
+            for ( imageIt = images.begin(); imageIt != images.end(); imageIt++)
+            {
+                if ((imageIt+1) != images.end())
+                {
+                    imageIt->setNextAddr( (imageIt+1)->getAddress());
+                }
+            }
             return true;
         }
         else
         {
-            return false;
+            // iterate over our images till we find ours, then we will read data
+            for ( imageIt = images.begin(); imageIt != images.end(); imageIt++)
+            {
+                if (imageIt->getAddress() == sRecData->m_addr)
+                {
+                    CombinedSrecImageHeader c(file, (const char*)sRecData->m_data);
+                    unsigned char* d = c.getData();
+                    imageIt->setHeader(d);
+                    delete d;
+
+                    // now iterate over till we get to the next address, as indicated by a false
+                    bool  stillWorking = true;
+                    char line[1000];
+                    unsigned int lineNum = 1;
+                    while (fgets (line, sizeof(line), file) != NULL)
+                    {
+                        if (imageIt->ParseLine(lineNum++, line) == false)
+                        {
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+            return true;
         }
     }
     else
@@ -196,3 +252,83 @@ int CombinedSRecord2Mem::getSrecLength()
 }
 
 
+CombinedSrecImageHeader::CombinedSrecImageHeader(FILE *f, const char* initialData)
+{
+    file = f;
+    // first copy the initial data
+    memcpy(data, initialData, 16);
+
+    char line[1000];
+    unsigned int lineNum = 1;
+    if (fgets( line, sizeof(line), file) != NULL)
+    {
+        ParseLine(lineNum, line);
+    }
+
+}
+CombinedSrecImageHeader::~CombinedSrecImageHeader()
+{
+}
+bool  CombinedSrecImageHeader::Data( const SRecordData *sRecData )
+{
+    memcpy(&data[16], sRecData->m_data, sRecData->m_dataLen);
+}
+unsigned char* CombinedSrecImageHeader::getData()
+{
+    unsigned char *retData = new unsigned char [32];
+    memcpy(retData, data, 32);
+    return retData;
+}
+
+CombinedSrecImageData::CombinedSrecImageData(unsigned int addr)
+:address(addr),
+    blob(0)
+{
+    memset (header, 0, 32);
+}
+CombinedSrecImageData::~CombinedSrecImageData()
+{
+}
+void CombinedSrecImageData::setNextAddr(unsigned int addr)
+{
+    nextAddress = addr;
+}
+
+void CombinedSrecImageData::setHeader(unsigned char* headerData)
+{
+    memcpy(header, headerData, 32);
+    blob = new MaceBlob(headerData);
+}
+bool  CombinedSrecImageData::Data( const SRecordData *sRecData )
+{
+    // we want to stop before the next address
+    if ( ((sRecData->m_addr + sRecData->m_dataLen) == nextAddress) || (sRecData->m_dataLen < 16))
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+bool CombinedSrecImageData::getNextData(unsigned char* outData, unsigned int len)
+{
+    return false;
+}
+unsigned int CombinedSrecImageData::getAddress()
+{
+    return address;
+}
+unsigned int CombinedSrecImageData::getNextAddress()
+{
+    return nextAddress;
+}
+
+// private:
+//     FILE *file;
+//     unsigned int address;
+//     unsigned char header[32];
+//     unsigned char* data;
+//     unsigned int dataLength;
+//     unsigned int index;
+// };

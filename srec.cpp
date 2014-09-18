@@ -249,6 +249,7 @@ bool SRecordParser::ParseLine( unsigned lineNum, const char *line )
    SRecordData    sRecData;
    SRecordHeader  sRecHdr;
    unsigned char  data[ 50 ];
+   bool returnVal = true;
 
    memset( &sRecData, 0, sizeof( sRecData ));
    memset( data, 0, sizeof( data ));
@@ -338,7 +339,7 @@ bool SRecordParser::ParseLine( unsigned lineNum, const char *line )
          sRecData.m_dataLen = lineLen - sRecData.m_addrLen - 1;
          memcpy( sRecData.m_data, x, sRecData.m_dataLen );
 
-         ParsedData( &sRecData );
+         returnVal = ParsedData( &sRecData );
          break;
       }
 
@@ -381,7 +382,7 @@ bool SRecordParser::ParseLine( unsigned lineNum, const char *line )
    }
 
    //std::cout << std::endl;
-   return true;
+   return returnVal;
 }
 
 /***************************************************************************/
