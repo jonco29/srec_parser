@@ -61,20 +61,12 @@ using namespace std;
 //**************************************************************************
 
 CombinedSRecord2Mem::CombinedSRecord2Mem(const char* fileName)
-: mLength (0),
-    file(0),
-    dataArray(0),
-    currentDataOffset(0),
-    dataArraySize(32),
+: file(0),
     combinedSrecValidated(false),
     combinedSrecParsed(false)
 {
     if (openFile(fileName))
     {
-        dataArraySize = mLength;
-        dataArray = new unsigned char[dataArraySize];
-
-        // 
         char line[1000];
         unsigned int lineNum = 1;
         while ((combinedSrecValidated == false) && (fgets( line, sizeof(line), file) != NULL))
@@ -88,8 +80,7 @@ CombinedSRecord2Mem::CombinedSRecord2Mem(const char* fileName)
     }
     else
     {
-        dataArraySize = 32;
-        dataArray = new unsigned char[dataArraySize];
+        exit ;
     }
 }
 
@@ -99,12 +90,6 @@ CombinedSRecord2Mem::~CombinedSRecord2Mem()
     {
         fclose(file);
         file = NULL;
-    }
-    if (dataArray != 0)
-    {
-        std::cout  << "deleting data" << std::endl;
-        delete dataArray;
-        dataArray = NULL;
     }
 }
 
@@ -192,8 +177,6 @@ bool  CombinedSRecord2Mem::Data( const SRecordData *sRecData )
 
 bool  CombinedSRecord2Mem::FinishSegment( unsigned addr, unsigned len )
 {
-    mLength = len;
-    currentDataOffset = 0;
     return true;
 }
 
@@ -213,7 +196,6 @@ bool CombinedSRecord2Mem::openFile(const char* fileName)
    int rc = fstat(fd, &stat_buf);
    if (rc == 0)
    {
-       mLength = stat_buf.st_size/2;
        file = fs;
        return true;
    }
@@ -225,33 +207,15 @@ FILE* CombinedSRecord2Mem::getFile()
     return file;
 }
 
-int CombinedSRecord2Mem::getNextData(unsigned char** ptr, int reqLen)
+MaceBlob* CombinedSRecord2Mem::getNextImage()
 {
-    int len = 0;
-
-    if (reqLen <= (mLength - currentDataOffset))
-    {
-        len = reqLen;
-    }
-    else if (reqLen > (mLength - currentDataOffset))
-    {
-        len = (mLength - currentDataOffset);
-    }
-    if (len > 0)
-    {
-        *ptr = new unsigned char[len];
-        memcpy(*ptr, &dataArray[currentDataOffset], len);
-        currentDataOffset += len;
-    }
-    return len;
+    MaceBlob *m = images[0].getImage();
+    return m;
 }
 
-int CombinedSRecord2Mem::getSrecLength()
-{
-    return mLength;
-}
-
-
+////////////////////////////////////////////////////////////////////////////////
+// CombinedSrecImageHeader stuff
+////////////////////////////////////////////////////////////////////////////////
 CombinedSrecImageHeader::CombinedSrecImageHeader(FILE *f, const char* initialData)
 {
     file = f;
@@ -280,6 +244,10 @@ unsigned char* CombinedSrecImageHeader::getData()
     return retData;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// CombinedSrecImageData stuff
+////////////////////////////////////////////////////////////////////////////////
+
 CombinedSrecImageData::CombinedSrecImageData(unsigned int addr)
 :address(addr),
     blob(0)
@@ -302,6 +270,8 @@ void CombinedSrecImageData::setHeader(unsigned char* headerData)
 bool  CombinedSrecImageData::Data( const SRecordData *sRecData )
 {
     // we want to stop before the next address
+    blob->addData((unsigned char*)sRecData->m_data, sRecData->m_dataLen);
+
     if ( ((sRecData->m_addr + sRecData->m_dataLen) == nextAddress) || (sRecData->m_dataLen < 16))
     {
         return false;
@@ -311,10 +281,6 @@ bool  CombinedSrecImageData::Data( const SRecordData *sRecData )
         return true;
     }
 }
-bool CombinedSrecImageData::getNextData(unsigned char* outData, unsigned int len)
-{
-    return false;
-}
 unsigned int CombinedSrecImageData::getAddress()
 {
     return address;
@@ -322,6 +288,11 @@ unsigned int CombinedSrecImageData::getAddress()
 unsigned int CombinedSrecImageData::getNextAddress()
 {
     return nextAddress;
+}
+MaceBlob *CombinedSrecImageData::getImage()
+{
+    MaceBlob* m = new MaceBlob(*blob);
+    return m;
 }
 
 // private:

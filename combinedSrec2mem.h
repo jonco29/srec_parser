@@ -1,4 +1,5 @@
 #include <vector>
+#include <iostream>
 #include "srec.h"
 #include "SRecMem.h"
 #include "MaceBlob.h"
@@ -17,8 +18,7 @@ public:
    CombinedSRecord2Mem(const char* file);
    virtual ~CombinedSRecord2Mem();
    virtual  bool  Data( const SRecordData *sRecData );
-   int getNextData(unsigned char** ptr, int len);
-   int getSrecLength();
+   MaceBlob* getNextImage();
 
 protected:
    virtual  bool  FinishSegment( unsigned addr, unsigned len );
@@ -26,10 +26,6 @@ private:
    FILE *file;
    FILE* getFile();
    bool openFile(const char* name);
-   unsigned char *dataArray;
-   unsigned int dataArraySize;
-   unsigned int currentDataOffset;
-   unsigned int mLength;
    bool combinedSrecValidated;
    bool combinedSrecParsed;
    vector <CombinedSrecImageData> images;
@@ -55,12 +51,20 @@ class CombinedSrecImageData : public SRecordParser
 public:
     CombinedSrecImageData(unsigned int addr);
     ~CombinedSrecImageData();
+    CombinedSrecImageData(const CombinedSrecImageData &other)
+    {
+        cout << "CombinedSrecImageData(CombinedSrecImageData &other) -- called" << endl;
+    }
+    // CombinedSrecImageData& operator= (CombinedSrecImageData const &other) 
+    // {
+    //     cout << "CombinedSrecImageData& operator= (CombinedSrecImageData const &other) -- called" << endl;
+    // }
     void setNextAddr(unsigned int addr);
     void setHeader(unsigned char* headerData);
     virtual  bool  Data( const SRecordData *sRecData );
-    bool getNextData(unsigned char* outData, unsigned int len);
     unsigned int getAddress();
     unsigned int getNextAddress();
+    MaceBlob *getImage();
 
 private:
     unsigned int address;
@@ -71,6 +75,5 @@ private:
     unsigned int index;
     MaceBlob *blob;
 };
-
 
 #endif

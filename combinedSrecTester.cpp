@@ -53,6 +53,7 @@
 int test (const char* arg)
 {
     CombinedSRecord2Mem srecMem(arg);
+    cout << "all done" << endl;
     // unsigned char *data = 0;
     // int len = 0;
     // const int reqLen = 48;
