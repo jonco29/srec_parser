@@ -1,4 +1,4 @@
-GCC = /usr/bin/g++-4.8
+GCC = /usr/bin/g++-4.8 -g
 OBJECTS = \
 		  srec.o \
 		  ucryptr_interface.o \
@@ -7,19 +7,26 @@ OBJECTS = \
 		  MaceBlob.o
 
 
-all: srec2c srec2mem flashloader combinedSrec2mem jonathan
+all: srec2c srec2mem flashloader combinedSrec2mem blank_flash upgrade jonathan
 
 srec2c: srec2c.o 
-	$(GCC) -g $(OBJECTS) $< -o $@
+	$(GCC)  $(OBJECTS) $< -o $@
 
 srec2mem: srec2memTester.o  
-	$(GCC) -g $(OBJECTS) $< -o $@
+	$(GCC)  $(OBJECTS) $< -o $@
 
 flashloader: flashloader.o  srec2mem.o ucryptr_interface.o
-	$(GCC) -g $(OBJECTS) $< -o $@
+	$(GCC)  $(OBJECTS) $< -o $@
 
 combinedSrec2mem: combinedSrecTester.o srec2mem.o ucryptr_interface.o MaceBlob.o
-	$(GCC) -g $(OBJECTS) $< -o $@
+	$(GCC)  $(OBJECTS) $< -o $@
+
+blank_flash: blank_flash.o srec2mem.o ucryptr_interface.o MaceBlob.o
+	$(GCC)  $(OBJECTS) $< -o $@
+
+upgrade: upgrade.o srec2mem.o ucryptr_interface.o MaceBlob.o
+	$(GCC)  $(OBJECTS) $< -o $@
+
 
 srec2c.o: SRecMem.h srec.h $(OBJECTS) 
 srec2mem.o: SRecMem.h $(OBJECTS) 

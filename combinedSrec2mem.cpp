@@ -125,7 +125,7 @@ bool  CombinedSRecord2Mem::Data( const SRecordData *sRecData )
                 addr |= (sRecData->m_data[dataIndex++] << 16);
                 addr |= (sRecData->m_data[dataIndex++] << 8 );
                 addr |= (sRecData->m_data[dataIndex++] << 0 );
-                printf ("the address of image #%d is %08X\n", i+1, addr);
+                // printf ("the address of image #%d is %08X\n", i+1, addr);
                 images.push_back(CombinedSrecImageData(addr));
             }
             combinedSrecParsed = true;
@@ -265,7 +265,7 @@ CombinedSrecImageData::~CombinedSrecImageData()
 }
 CombinedSrecImageData::CombinedSrecImageData(const CombinedSrecImageData &other)
 {
-    cout << "CombinedSrecImageData(CombinedSrecImageData &other) -- called" << endl;
+    // cout << "CombinedSrecImageData(CombinedSrecImageData &other) -- called" << endl;
     address = other.address;
     nextAddress = other.nextAddress;
     memcpy(header, other.header, 32);
@@ -273,7 +273,7 @@ CombinedSrecImageData::CombinedSrecImageData(const CombinedSrecImageData &other)
 }
 CombinedSrecImageData& CombinedSrecImageData::operator= (const CombinedSrecImageData &other)
 {
-    cout << "CombinedSrecImageData& operator= (CombinedSrecImageData const &other) -- called" << endl;
+    // cout << "CombinedSrecImageData& operator= (CombinedSrecImageData const &other) -- called" << endl;
     address = other.address;
     nextAddress = other.nextAddress;
     memcpy(header, other.header, 32);

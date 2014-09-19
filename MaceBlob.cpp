@@ -38,7 +38,7 @@ MaceBlob::~MaceBlob()
 
 MaceBlob::MaceBlob(const MaceBlob &other)
 {
-    cout << "MaceBlob::MaceBlob(MaceBlob &other) -- called " << endl;
+    // cout << "MaceBlob::MaceBlob(MaceBlob &other) -- called " << endl;
     length = other.length;
     id = other.id;
     algoId = other.algoId;
@@ -48,7 +48,7 @@ MaceBlob::MaceBlob(const MaceBlob &other)
 
 MaceBlob& MaceBlob::operator= (const MaceBlob &other) 
 {
-    cout << "MaceBlob::MaceBlob& operator =(MaceBlob const &other) -- called" << endl;
+    // cout << "MaceBlob::MaceBlob& operator =(MaceBlob const &other) -- called" << endl;
     length = other.length;
     id = other.id;
     algoId = other.algoId;

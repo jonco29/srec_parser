@@ -14,19 +14,19 @@ class DataBlob
         DataBlob (unsigned char* inData, unsigned int inLen) :data(inData), len(inLen){}
         ~DataBlob () 
         {
-            cout <<"calling: ~DataBlob\n";
+            // cout <<"calling: ~DataBlob\n";
             delete data;
         }
 
         DataBlob(const DataBlob &other) {
-            cout << "DataBlob(DataBlob const &other) --- called" << endl;
+            // cout << "DataBlob(DataBlob const &other) --- called" << endl;
             len = other.len;
             data = new unsigned char[len];
             memcpy (data, other.data, len);
         }
         DataBlob& operator=(const DataBlob &other) 
         {
-            cout << "DataBlob& operator=(DataBlob const &other) -- called" << endl;
+            // cout << "DataBlob& operator=(DataBlob const &other) -- called" << endl;
             len = other.len;
             data = new unsigned char[len];
             memcpy (data, other.data, len);

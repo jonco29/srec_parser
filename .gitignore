@@ -1,3 +1,4 @@
+.sw*
 .*.sw*
 a.out
 Debug
@@ -7,3 +8,10 @@ j.c
 srec2c
 srec2mem
 flashloader
+combinedSrec2mem
+blank_flash
+upgrade
+tags
+*.srec
+*.txt
+test_module_info*
