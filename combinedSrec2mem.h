@@ -1,4 +1,5 @@
 #include <vector>
+#include <deque>
 #include <iostream>
 #include "srec.h"
 #include "SRecMem.h"
@@ -28,8 +29,8 @@ private:
    bool openFile(const char* name);
    bool combinedSrecValidated;
    bool combinedSrecParsed;
-   vector <CombinedSrecImageData> images;
-   vector <CombinedSrecImageData>::iterator imageIt;
+   deque <CombinedSrecImageData> images;
+   deque <CombinedSrecImageData>::iterator imageIt;
 
 };
 
@@ -51,14 +52,8 @@ class CombinedSrecImageData : public SRecordParser
 public:
     CombinedSrecImageData(unsigned int addr);
     ~CombinedSrecImageData();
-    CombinedSrecImageData(const CombinedSrecImageData &other)
-    {
-        cout << "CombinedSrecImageData(CombinedSrecImageData &other) -- called" << endl;
-    }
-    // CombinedSrecImageData& operator= (CombinedSrecImageData const &other) 
-    // {
-    //     cout << "CombinedSrecImageData& operator= (CombinedSrecImageData const &other) -- called" << endl;
-    // }
+    CombinedSrecImageData(const CombinedSrecImageData &other);
+    CombinedSrecImageData& operator= (const CombinedSrecImageData &other);
     void setNextAddr(unsigned int addr);
     void setHeader(unsigned char* headerData);
     virtual  bool  Data( const SRecordData *sRecData );
@@ -70,9 +65,6 @@ private:
     unsigned int address;
     unsigned int nextAddress;
     unsigned char header[32];
-    unsigned char* data;
-    unsigned int dataLength;
-    unsigned int index;
     MaceBlob *blob;
 };
 

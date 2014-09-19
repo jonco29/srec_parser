@@ -29,6 +29,7 @@
 #include "SRecMem.h"
 #include "combinedSrec2mem.h"
 #include "ucryptr_interface.h"
+#include "MaceBlob.h"
 
 /* ---- Public Variables ------------------------------------------------- */
 /* ---- Private Constants and Types -------------------------------------- */
@@ -52,7 +53,36 @@
 
 int test (const char* arg)
 {
-    CombinedSRecord2Mem srecMem(arg);
+    //CombinedSRecord2Mem srecMem(arg);
+    CombinedSRecord2Mem *srecMem = new CombinedSRecord2Mem(arg);
+    MaceBlob *m;
+
+    while ((m = srecMem->getNextImage()) != 0)
+    {
+        cout <<"================================================================================\n";
+        printf("this is id: %02X\n", m->getId());
+        printf("this is algoId: %02X\n", m->getAlgoId());
+        while (m->getNextDataLen() != 0)
+        {
+            unsigned int len = 0;
+            unsigned char* data = 0;
+            len = m->getNextDataLen();
+            data = m->getNextData();
+            int i;
+            for (i = 0; i < len; i++)
+            {
+                printf("%02X", data[i]);
+            }
+            cout << endl;
+        }
+
+    }
+        
+
+
+    delete srecMem;
+
+
     cout << "all done" << endl;
     // unsigned char *data = 0;
     // int len = 0;

@@ -12,11 +12,11 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <deque>
 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <vector>
 #include <fstream>
 #include <string>
 #include <time.h>
@@ -130,7 +130,7 @@ bool  CombinedSRecord2Mem::Data( const SRecordData *sRecData )
             }
             combinedSrecParsed = true;
 
-            // now put the next addresses in the vector
+            // now put the next addresses in the deque
             for ( imageIt = images.begin(); imageIt != images.end(); imageIt++)
             {
                 if ((imageIt+1) != images.end())
@@ -209,7 +209,13 @@ FILE* CombinedSRecord2Mem::getFile()
 
 MaceBlob* CombinedSRecord2Mem::getNextImage()
 {
-    MaceBlob *m = images[0].getImage();
+    //MaceBlob *m = images[0].getImage();
+    MaceBlob *m = 0;
+    if (images.empty() == false)
+    {
+        m = images.front().getImage();
+        images.pop_front();
+    }
     return m;
 }
 
@@ -256,6 +262,22 @@ CombinedSrecImageData::CombinedSrecImageData(unsigned int addr)
 }
 CombinedSrecImageData::~CombinedSrecImageData()
 {
+}
+CombinedSrecImageData::CombinedSrecImageData(const CombinedSrecImageData &other)
+{
+    cout << "CombinedSrecImageData(CombinedSrecImageData &other) -- called" << endl;
+    address = other.address;
+    nextAddress = other.nextAddress;
+    memcpy(header, other.header, 32);
+    blob = other.blob;
+}
+CombinedSrecImageData& CombinedSrecImageData::operator= (const CombinedSrecImageData &other)
+{
+    cout << "CombinedSrecImageData& operator= (CombinedSrecImageData const &other) -- called" << endl;
+    address = other.address;
+    nextAddress = other.nextAddress;
+    memcpy(header, other.header, 32);
+    blob = other.blob;
 }
 void CombinedSrecImageData::setNextAddr(unsigned int addr)
 {

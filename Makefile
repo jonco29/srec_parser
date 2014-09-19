@@ -18,7 +18,7 @@ srec2mem: srec2memTester.o
 flashloader: flashloader.o  srec2mem.o ucryptr_interface.o
 	$(GCC) -g $(OBJECTS) $< -o $@
 
-combinedSrec2mem: combinedSrecTester.o srec2mem.o ucryptr_interface.o
+combinedSrec2mem: combinedSrecTester.o srec2mem.o ucryptr_interface.o MaceBlob.o
 	$(GCC) -g $(OBJECTS) $< -o $@
 
 srec2c.o: SRecMem.h srec.h $(OBJECTS) 
