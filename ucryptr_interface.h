@@ -43,12 +43,13 @@ class uCryptrInterface
         bool sendMACEDownloadComplete();
         bool send(UCRYPTR_PAYLOAD_t* data);
         unsigned char* getResponse();
-        bool sendRaw(unsigned char* data, unsigned int len);
+        bool sendRaw(unsigned char* data, unsigned int len, int sleepVal=0);
     private:
         unsigned char* readData;
         bool rxData();
         void cleanupReadData();
         char asciiVal(unsigned char val);
+        unsigned char sendData[4000];
 
 };
 
