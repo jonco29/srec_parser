@@ -16,6 +16,7 @@ using namespace std;
 #define A9                                              0x02
 #define ALG                                             0x03
 
+#define   ENTER_PROGRAMMING_MODE_OPCODE                 0xD1
 #define   START_IMAGE_OPCODE                            0xD3
 #define   DATA_OPCODE                                   0xD5
 #define   DOWNLOAD_COMPLETE_OPCODE                      0xD7
@@ -62,6 +63,7 @@ unsigned char* createStartImage(unsigned int  id, unsigned short algoId, int *le
 unsigned char* createDataDownload(unsigned char* inData, unsigned int* len);
 unsigned char* createWaitForNextImage(unsigned int* len);
 unsigned char* createDownLoadComplete(unsigned int* len);
+void enterProgMode(uCryptrInterface &uc);
 void eraseSlots(uCryptrInterface &uc);
 void createEraseAppImage(uCryptrInterface &uc, unsigned char id);
 void doUpgrade(uCryptrInterface &uc, CombinedSRecord2Mem* srec);
@@ -108,11 +110,19 @@ int main (int argc, char** argv)
 void doUpgrade(uCryptrInterface &uc, CombinedSRecord2Mem* srec)
 {
     bool retVal = false;
+    bool progModeEntered = false;
     MaceBlob *m;
     bool algoStarted = false;
     unsigned char* sendData = 0;
     while ( (m = srec->getNextImage()) != 0 )
     {
+        // we need to enter prog mode
+        if (progModeEntered == false)
+        {
+            enterProgMode(uc);
+            progModeEntered = true;
+        }
+
         switch (m->getId())
         {
             case BB_3X:
@@ -182,6 +192,17 @@ unsigned char* createDownLoadComplete(unsigned int* len)
     msg[0] = DOWNLOAD_COMPLETE_OPCODE;
     msg[1] = 0;
     return msg;
+}
+void enterProgMode(uCryptrInterface &uc)
+{
+    unsigned char* msg = new unsigned char[2];
+    msg[0] = ENTER_PROGRAMMING_MODE_OPCODE;
+    msg[1] = 0;
+    printf ("entering programming mode\n");
+    uc.sendRaw( msg, 3);
+    sleep(2);
+    printf ("program mode should be entered\n");
+    delete msg;
 }
 void eraseSlots(uCryptrInterface &uc)
 {
