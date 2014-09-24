@@ -114,13 +114,20 @@ bool uCryptrInterface::send(UCRYPTR_PAYLOAD_t* data)
     return status;
 }
 
-bool uCryptrInterface::sendRaw(unsigned char* data, unsigned int len)
+bool uCryptrInterface::sendRaw (unsigned char* data, unsigned int len, int sleepVal)
 {
     int fd  = 0;
     int ret = 0;
     int i = 0;
     bool status = false;
     unsigned char* outData = data;
+    memcpy(sendData, data, len);
+    outData = sendData;
+
+    if (len < 64)
+    {
+        len = 64;
+    }
 
     cleanupReadData();
 
@@ -146,13 +153,18 @@ bool uCryptrInterface::sendRaw(unsigned char* data, unsigned int len)
             } 
             else 
             {
-                printf("request_handler() - Data written to %s\n", DEV_UCRYPTR);
+                //printf("request_handler() - Data written to %s\n", DEV_UCRYPTR);
                 i++;
                 status = true;
 
                 if(-1 == (ret = close(fd)))
                 {
                     perror("request_handler() - Failure to close /dev/sd_cryptr0");
+                }
+
+                if (sleepVal)
+                {
+                    sleep(sleepVal);
                 }
 
                 status = rxData();
