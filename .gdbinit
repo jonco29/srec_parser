@@ -3,8 +3,8 @@
 #set args mace_factory_pre.srec j.c jonathan
 #set args  umace_flash_loader.signed.axf.srec boot_block.signed.enc.srec
 #set args  mace_all_pre.srec boot_block.signed.enc.srec
-#set args  mace_all_pre.srec 
-set args  25.mace_all_pre.srec 
+set args  mace_all_pre.srec 
+#set args  25.mace_all_pre.srec 
 #set args  umace_flash_loader.signed.axf.srec
 
 set output-radix 16
@@ -17,9 +17,10 @@ set output-radix 16
 ## b uCryptrInterface::formatData
 ## b doFlashLoader
 ## b doBootBlock
-b test
+#b test
 #b CombinedSRecord2Mem::Data(SRecordData const*) 
 #b combinedSrec2mem.cpp:129
+b doUpgrade
 
 
 
