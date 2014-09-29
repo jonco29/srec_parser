@@ -29,12 +29,14 @@ typedef struct PACKED
 
 #define MACE_DOWNLOAD_COMPLETE  0x59
 
+#define MMCHWRESET 0x5801
+
 
 
 class uCryptrInterface 
 {
     public:
-        uCryptrInterface();
+        uCryptrInterface(bool isBlank=false);
         ~uCryptrInterface() {};
 
         bool isReady();
@@ -42,14 +44,18 @@ class uCryptrInterface
         bool sendMACEboot();
         bool sendMACEDownloadComplete();
         bool send(UCRYPTR_PAYLOAD_t* data);
-        unsigned char* getResponse();
         bool sendRaw(unsigned char* data, unsigned int len, int sleepVal=0);
+        bool sendRawNoRx(unsigned char* data, unsigned int len, int sleepVal=0);
+        unsigned char* getResponse(unsigned int *len);
+        void resetUC();
     private:
         unsigned char* readData;
+        bool blank;
         bool rxData();
         void cleanupReadData();
         char asciiVal(unsigned char val);
         unsigned char sendData[4000];
+        ssize_t readLen;
 
 };
 

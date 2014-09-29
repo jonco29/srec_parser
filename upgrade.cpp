@@ -30,6 +30,8 @@ using namespace std;
 #define   ARM7_ERASE_ALGO_BY_ID_OPCODE                  0xE3
 #define   ARM7_ERASE_ALGO_BY_SLOT_OPCODE                0xE4
 
+#define   PAL_CTRL_BYTE                                 0x39
+
 #ifndef INT8
 typedef signed char     INT8;
 #endif
@@ -114,6 +116,9 @@ void doUpgrade(uCryptrInterface &uc, CombinedSRecord2Mem* srec)
     MaceBlob *m;
     bool algoStarted = false;
     unsigned char* sendData = 0;
+    unsigned char* response = 0;
+    unsigned int readLen = 0;
+
     while ( (m = srec->getNextImage()) != 0 )
     {
         // we need to enter prog mode
@@ -128,6 +133,7 @@ void doUpgrade(uCryptrInterface &uc, CombinedSRecord2Mem* srec)
             case BB_3X:
             {
                 programBootBlock(uc, m);
+                progModeEntered = false;
                 break;
             }
             case A7:
@@ -149,86 +155,182 @@ void doUpgrade(uCryptrInterface &uc, CombinedSRecord2Mem* srec)
             }
         }
     }
+    if (progModeEntered == true)
+    {
+        unsigned int len = 0;
+        cout << "sending d/l complte\n";
+        sendData = createDownLoadComplete(&len);
+        //uc.sendRaw( (unsigned char*)sendData, len);
+        if (uc.sendRawNoRx(sendData, len))
+        {
+            response = uc.getResponse(&readLen);
+            delete response;
+
+            sleep (1);
+            uc.resetUC();
+        }
+        else
+        {
+            exit(1);
+        }
+        delete sendData;
+    }
 }
 
 unsigned char* createStartImage(unsigned int  id, unsigned short algoId, int* len)
 {
-    unsigned char* msg = new unsigned char[5];
-    *len = 5;
-    msg[0] = START_IMAGE_OPCODE;
-    msg[1] = 0;
-    msg[2] = id;
-    msg[3] = (algoId >> 8 ) & 0xff;
-    msg[4] = (algoId >> 0 ) & 0xff;
+    *len = 6;
+    unsigned char* msg = new unsigned char[*len];
+    msg[0] = PAL_CTRL_BYTE;
+    msg[1] = START_IMAGE_OPCODE;
+    msg[2] = 0;
+    msg[3] = id;
+    msg[4] = (algoId >> 8 ) & 0xff;
+    msg[5] = (algoId >> 0 ) & 0xff;
     return msg;
 }
 
 unsigned char* createDataDownload(unsigned char* inData, unsigned int* len)
 {
-    unsigned char* outData = new unsigned char[*len + 5];
+    unsigned char* outData = new unsigned char[*len + 6];
     UINT16 crc = 0xffff;
 
-    outData[0] = DATA_OPCODE;
-    outData[1] = 0;
-    outData[2] = *len;
-    outData[3] = 0;
+    outData[0] = PAL_CTRL_BYTE;
+    outData[1] = DATA_OPCODE;
+    outData[2] = 0;
+    outData[3] = *len;
     outData[4] = 0;
-    memcpy(&outData[5], inData, *len);
-    *len +=5;
+    outData[5] = 0;
+    memcpy(&outData[6], inData, *len);
+    *len +=6;
     return outData;
 }
 unsigned char* createWaitForNextImage(unsigned int* len)
 {
-    unsigned char* msg = new unsigned char[2];
-    *len = 2;
-    msg[0] = WAIT_FOR_NEXT_OPCODE;
-    msg[1] = 0;
+    *len = 3;
+    unsigned char* msg = new unsigned char[*len];
+    msg[0] = PAL_CTRL_BYTE;
+    msg[1] = WAIT_FOR_NEXT_OPCODE;
+    msg[2] = 0;
     return msg;
 }
 unsigned char* createDownLoadComplete(unsigned int* len)
 {
-    unsigned char* msg = new unsigned char[2];
-    *len = 2;
-    msg[0] = DOWNLOAD_COMPLETE_OPCODE;
-    msg[1] = 0;
+    *len = 3;
+    unsigned char* msg = new unsigned char[*len];
+    msg[0] = PAL_CTRL_BYTE;
+    msg[1] = DOWNLOAD_COMPLETE_OPCODE;
+    msg[2] = 0;
     return msg;
 }
 void enterProgMode(uCryptrInterface &uc)
 {
-    unsigned char* msg = new unsigned char[2];
-    msg[0] = ENTER_PROGRAMMING_MODE_OPCODE;
-    msg[1] = 0;
+    
+    const unsigned int len = 3;
+    unsigned char* msg = new unsigned char[len];
+    unsigned char* response = 0;
+    unsigned int readLen = 0;
+    bool appMode = false;
+
+    // first send a link setup
+    msg[0] = 0x80;
+    msg[1] = 0x01;
+    msg[2] = 0x82;
+    //uc.sendRaw( msg, len);
+    if (uc.sendRawNoRx(msg, len))
+    {
+        response = uc.getResponse(&readLen);
+    }
+    else
+    {
+        exit(1);
+    }
+    if(response[0] == 0x80)
+    {
+        appMode = true;
+    }
+    delete response;
+
+    // now send enter prog mode
+
+    msg[0] = 0x30;
+    msg[1] = ENTER_PROGRAMMING_MODE_OPCODE;
+    msg[2] = 0;
     printf ("entering programming mode\n");
-    uc.sendRaw( msg, 3);
+    //uc.sendRaw( msg, len);
+    if (uc.sendRawNoRx(msg, len))
+    {
+        if (appMode == false)
+        {
+            response = uc.getResponse(&readLen);
+            delete response;
+        }
+        else
+        {
+            sleep(1);
+            uc.resetUC();
+        }
+    }
+    else
+    {
+        exit(1);
+    }
+
     sleep(2);
     printf ("program mode should be entered\n");
     delete msg;
 }
 void eraseSlots(uCryptrInterface &uc)
 {
-    unsigned char* msg = new unsigned char[3];
+    const unsigned int len = 4;
+    unsigned char* msg = new unsigned char[len];
     unsigned int i;
-    msg[0] = ERASE_ALGO_BY_SLOT_OPCODE;
-    msg[1] = 0;
+    unsigned char* response = 0;
+    unsigned int readLen = 0;
+    msg[0] = PAL_CTRL_BYTE;
+    msg[1] = ERASE_ALGO_BY_SLOT_OPCODE;
     msg[2] = 0;
+    msg[3] = 0;
 
     for (i = 0; i < 8; i++)
     {
-        msg[2] = i & 0xff;
+        msg[3] = i & 0xff;
         printf ("erasing slot id: 0x%02X, and waiting 1 second for the write\n", i);
-        uc.sendRaw( msg, 3, 3);
+        //uc.sendRaw( msg, len, 3);
+        if (uc.sendRawNoRx(msg, len, 3))
+        {
+            response = uc.getResponse(&readLen);
+            delete response;
+        }
+        else
+        {
+            exit(1);
+        }
         printf ("done erasing slot id: 0x%02X\n", i);
     }
     delete msg;
 }
 void createEraseAppImage(uCryptrInterface &uc, unsigned char id)
 {
-    unsigned char* msg = new unsigned char[3];
-    msg[0] = ERASE_APP_AREA_OPCODE;
-    msg[1] = 0;
-    msg[2] = id;
+    const unsigned int len = 4;
+    unsigned char* msg = new unsigned char[len];
+    unsigned char* response = 0;
+    unsigned int readLen = 0;
+    msg[0] = PAL_CTRL_BYTE;
+    msg[1] = ERASE_APP_AREA_OPCODE;
+    msg[2] = 0;
+    msg[3] = id;
     printf ("erasing image id: 0x%02X, and waiting 7 seconds for the write\n", id);
-    uc.sendRaw( msg, 3, 7);
+    //uc.sendRaw( msg, len, 7);
+    if (uc.sendRawNoRx(msg, len, 7))
+    {
+        response = uc.getResponse(&readLen);
+        delete response;
+    }
+    else
+    {
+        exit(1);
+    }
     printf ("done erasing image\n");
     delete msg;
 }
@@ -271,11 +373,20 @@ void programBootBlock(uCryptrInterface &uc, MaceBlob *m)
     //  d/l complete
     int xferLen = 0;
     unsigned char* sendData = 0;
+    unsigned int readLen = 0;
+    unsigned char* response = 0;
 
     printf("starting to program boot block\n");
 
+    createEraseAppImage(uc, A9);
+
     sendData = createStartImage(m->getId(), m->getAlgoId(),  &xferLen);
-    uc.sendRaw( sendData, xferLen);
+    //uc.sendRaw( sendData, xferLen);
+    if ( uc.sendRawNoRx( sendData, xferLen))
+    {
+        response = uc.getResponse(&readLen);
+        delete response;
+    }
     delete sendData;
 
     //return ;
@@ -295,7 +406,12 @@ void programBootBlock(uCryptrInterface &uc, MaceBlob *m)
             }
         }
         sendData = createDataDownload(data, &len);
-        uc.sendRaw ((unsigned char*)sendData, len);
+        //uc.sendRaw ((unsigned char*)sendData, len);
+        if ( uc.sendRawNoRx( sendData, len))
+        {
+            response = uc.getResponse(&readLen);
+            delete response;
+        }
         delete data;
         delete sendData;
     }
@@ -304,26 +420,48 @@ void programBootBlock(uCryptrInterface &uc, MaceBlob *m)
     // send wait for next image
     sendData = createWaitForNextImage(&len);
     cout << "sending wait for next image and sleeping 5 seconds to validate the image before d/l complete\n";
-    uc.sendRaw( (unsigned char*)sendData, len, 5);
+    // uc.sendRaw( (unsigned char*)sendData, len, 5);
+    if (uc.sendRawNoRx(sendData, len, 5))
+    {
+        response = uc.getResponse(&readLen);
+        delete response;
+    }
+    else
+    {
+        exit(1);
+    }
     delete sendData;
 
     cout << "sending d/l complte\n";
     sendData = createDownLoadComplete(&len);
-    uc.sendRaw( (unsigned char*)sendData, len);
+    //uc.sendRaw( (unsigned char*)sendData, len);
+    if (uc.sendRawNoRx(sendData, len))
+    {
+        response = uc.getResponse(&readLen);
+        delete response;
+    }
+    else
+    {
+        exit(1);
+    }
     delete sendData;
 
+    cout << "resettin, should take about 7 seconds to get up and running....\n";
     sleep (1);
-    while (true)
-    {
-        cout << "now you need to eject the card and re-insert twice:\n";
-        cout << "have you done that?:  [y/n] ";
-        char a;
-        cin >> a;
-        if (a == 'y' || a == 'Y')
-        {
-            break;
-        }
-    }
+    uc.resetUC();
+    sleep (1);
+    uc.resetUC();
+    //while (true)
+    //{
+    //    cout << "now you need to eject the card and re-insert twice:\n";
+    //    cout << "have you done that?:  [y/n] ";
+    //    char a;
+    //    cin >> a;
+    //    if (a == 'y' || a == 'Y')
+    //    {
+    //        break;
+    //    }
+    //}
     printf("done programming boot block\n");
 
 }
@@ -337,13 +475,24 @@ void programARM9(uCryptrInterface &uc, MaceBlob *m)
     //  d/l complete
     int xferLen = 0;
     unsigned char* sendData = 0;
+    unsigned char* response = 0;
+    unsigned int readLen = 0;
 
 
     printf("starting to program image id: 0x%02X\n", m->getId());
     createEraseAppImage(uc, m->getId());
 
     sendData = createStartImage(m->getId(), m->getAlgoId(),  &xferLen);
-    uc.sendRaw( sendData, xferLen);
+    // uc.sendRaw( sendData, xferLen);
+    if (uc.sendRawNoRx(sendData, xferLen))
+    {
+        response = uc.getResponse(&readLen);
+        delete response;
+    }
+    else
+    {
+        exit(1);
+    }
     delete sendData;
 
     //return ;
@@ -363,7 +512,16 @@ void programARM9(uCryptrInterface &uc, MaceBlob *m)
         //     }
         // }
         sendData = createDataDownload(data, &len);
-        uc.sendRaw ((unsigned char*)sendData, len);
+        //uc.sendRaw ((unsigned char*)sendData, len);
+        if (uc.sendRawNoRx(sendData, len))
+        {
+            response = uc.getResponse(&readLen);
+            delete response;
+        }
+        else
+        {
+            exit(1);
+        }
         delete data;
         delete sendData;
     }
@@ -371,7 +529,16 @@ void programARM9(uCryptrInterface &uc, MaceBlob *m)
     len = 0;
     // send wait for next image
     sendData = createWaitForNextImage(&len);
-    uc.sendRaw( (unsigned char*)sendData, len);
+    //uc.sendRaw( (unsigned char*)sendData, len);
+    if (uc.sendRawNoRx(sendData, len))
+    {
+        response = uc.getResponse(&readLen);
+        delete response;
+    }
+    else
+    {
+        exit(1);
+    }
     delete sendData;
     printf("done programming app id: 0x%02X\n", m->getId());
 }
@@ -385,6 +552,8 @@ void programAlgos(uCryptrInterface &uc, MaceBlob *m, bool algoErased)
     //  d/l complete
     int xferLen = 0;
     unsigned char* sendData = 0;
+    unsigned char* response = 0;
+    unsigned int readLen = 0;
 
 
     printf("starting to program algo id: 0x%02X\n", m->getAlgoId());
@@ -394,11 +563,20 @@ void programAlgos(uCryptrInterface &uc, MaceBlob *m, bool algoErased)
     }
 
     sendData = createStartImage(m->getId(), m->getAlgoId(),  &xferLen);
-    uc.sendRaw( sendData, xferLen);
+    //uc.sendRaw( sendData, xferLen);
+    if (uc.sendRawNoRx(sendData, xferLen))
+    {
+        response = uc.getResponse(&readLen);
+        delete response;
+    }
+    else
+    {
+        exit(1);
+    }
     delete sendData;
 
     //return ;
-    const unsigned int reqLen = 160;
+    const unsigned int reqLen = 64;
     unsigned int len = 64;
     unsigned char* data = 0;
     int bogus = 0;
@@ -414,7 +592,16 @@ void programAlgos(uCryptrInterface &uc, MaceBlob *m, bool algoErased)
         //     }
         // }
         sendData = createDataDownload(data, &len);
-        uc.sendRaw ((unsigned char*)sendData, len);
+        // uc.sendRaw ((unsigned char*)sendData, len);
+        if (uc.sendRawNoRx(sendData, len))
+        {
+            response = uc.getResponse(&readLen);
+            delete response;
+        }
+        else
+        {
+            exit(1);
+        }
         delete data;
         delete sendData;
     }
@@ -422,7 +609,16 @@ void programAlgos(uCryptrInterface &uc, MaceBlob *m, bool algoErased)
     len = 0;
     // send wait for next image
     sendData = createWaitForNextImage(&len);
-    uc.sendRaw( (unsigned char*)sendData, len);
+    // uc.sendRaw( (unsigned char*)sendData, len);
+    if (uc.sendRawNoRx(sendData, len))
+    {
+        response = uc.getResponse(&readLen);
+        delete response;
+    }
+    else
+    {
+        exit(1);
+    }
     delete sendData;
 
     printf("done programming algo id: 0x%02X\n", m->getAlgoId());

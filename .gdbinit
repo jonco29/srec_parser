@@ -22,6 +22,10 @@ set output-radix 16
 #b combinedSrec2mem.cpp:129
 b doUpgrade
 
+b upgrade.cpp:447
+b programAlgos
+b programARM9
+
 
 
 

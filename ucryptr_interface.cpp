@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -13,8 +14,10 @@
 
 using namespace std;
 
-uCryptrInterface::uCryptrInterface()
-    :readData(0)
+uCryptrInterface::uCryptrInterface(bool isBlank)
+    :readData(0),
+    blank(isBlank),
+    readLen(0)
 {
 }
 
@@ -116,6 +119,16 @@ bool uCryptrInterface::send(UCRYPTR_PAYLOAD_t* data)
 
 bool uCryptrInterface::sendRaw (unsigned char* data, unsigned int len, int sleepVal)
 {
+    bool status = false;
+    status = sendRawNoRx(data, len, sleepVal);
+    if (status)
+    {
+        status = rxData();
+    }
+    return status;
+}
+bool uCryptrInterface::sendRawNoRx(unsigned char* data, unsigned int len, int sleepVal)
+{
     int fd  = 0;
     int ret = 0;
     int i = 0;
@@ -124,9 +137,14 @@ bool uCryptrInterface::sendRaw (unsigned char* data, unsigned int len, int sleep
     memcpy(sendData, data, len);
     outData = sendData;
 
-    if (len < 64)
+    // if we are blank, we don't want to pad
+    // but if we are blank, we need to pad
+    if (blank == false)
     {
-        len = 64;
+        if (len < 64)
+        {
+            len = 64;
+        }
     }
 
     cleanupReadData();
@@ -166,9 +184,6 @@ bool uCryptrInterface::sendRaw (unsigned char* data, unsigned int len, int sleep
                 {
                     sleep(sleepVal);
                 }
-
-                status = rxData();
-
             }
         }
     }
@@ -181,6 +196,7 @@ void uCryptrInterface::cleanupReadData()
     {
         delete readData;
         readData = 0;
+        readLen = 0;
     }
 }
 
@@ -194,36 +210,60 @@ bool uCryptrInterface::rxData()
     int fd = -1;
 
 
-
-    //while(0 != rsp_loop--) 
+    if( 0 > (fd = open(DEV_UCRYPTR, O_RDWR))) 
     {
-
-        if(0 > (fd = open(DEV_UCRYPTR, O_RDWR))) {
-
-            perror("response_handler - Failed to open /dev/ucryptr0");
-            rc = fd;
+        perror("response_handler - Failed to open /dev/ucryptr0");
+        rc = fd;
+    } 
+    else 
+    {
+        if(0 < (rc = read(fd, readData, UC_READ_LEN))) 
+        {
+            status = true;
+            readLen = rc;
         } 
         else 
         {
-            if(0 < (rc = read(fd, readData, UC_READ_LEN))) 
-            {
-                //display_response((unsigned  char*)output_buffer);
-                status = true;
-            } 
-            else 
-            {
-                perror("Failure to read from /dev/ucryptr0");
-            }
-
-            if(-1 == (rc = close(fd)))
-            {
-                perror("response_handler() - Failure to close /dev/sd_cryptr0");
-            }
+            perror("Failure to read from /dev/ucryptr0");
         }
 
+        if(-1 == (rc = close(fd)))
+        {
+            perror("response_handler() - Failure to close /dev/sd_cryptr0");
+        }
     }
 
     return status;
+}
+unsigned char* uCryptrInterface::getResponse(unsigned int *len)
+{
+    unsigned char* data = 0;
+
+    if (readLen <= 0)
+    {
+        if (rxData() != true)
+        {
+            exit(1);
+        }
+    }
+    if (readLen > 0)
+    {
+        *len = readLen;
+        data = new unsigned char [readLen];
+        memcpy (data, readData, readLen);
+
+        int i;
+        printf ("Read response: ");
+        for (i = 0; i < readLen; i++)
+        {
+            printf("%02X", readData[i]);
+            if (i %16 == 15)
+            {
+                printf("\n");
+            }
+        }
+    }
+    return data;
 }
 
 char uCryptrInterface::asciiVal(unsigned char a)
@@ -242,4 +282,23 @@ char uCryptrInterface::asciiVal(unsigned char a)
         a = 0;
     }
     return (char)a;
+}
+
+void uCryptrInterface::resetUC()
+{
+    int fd = -1;
+    int status = 0;
+
+
+    if( 0 > (fd = open(DEV_UCRYPTR, O_RDWR))) 
+    {
+        perror("response_handler - Failed to open /dev/ucryptr0");
+    } 
+    else 
+    {
+        printf("resetting cryptr....\n");
+        status = ioctl(fd, MMCHWRESET, 0);
+        sleep(2);
+        printf("reset of cryptr is complete.  the status is: 0x%02X\n", status);
+    }
 }

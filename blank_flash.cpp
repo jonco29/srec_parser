@@ -16,7 +16,7 @@ bool doBootBlock(uCryptrInterface &uc, CombinedSRecord2Mem* srec);
 int main (int argc, char** argv)
 {
     FILE *fstream;
-    uCryptrInterface uc;
+    uCryptrInterface uc(true);
     CombinedSRecord2Mem *srec = 0;
 
     if (argc != 2)
