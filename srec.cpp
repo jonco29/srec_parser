@@ -15,6 +15,11 @@
 
 #include "srec.h"
 
+// _CRT_SECURE_NO_WARNINGS_CRT_SECURE_NO_WARNINGS#ifdef WIN32
+// #define _CRT_SECURE_NO_WARNINGS 1
+// #endif
+
+
 // ---- Public Variables ---------------------------------------------------
 // ---- Private Constants and Types ----------------------------------------
 // ---- Private Variables --------------------------------------------------
@@ -331,7 +336,7 @@ bool SRecordParser::ParseLine( unsigned lineNum, const char *line )
 
          unsigned char *x = data;
 
-         for ( int addrIdx = 0; addrIdx < sRecData.m_addrLen; addrIdx++ ) 
+         for ( unsigned int addrIdx = 0; addrIdx < sRecData.m_addrLen; addrIdx++ ) 
          {
             sRecData.m_addr <<= 8;
             sRecData.m_addr += *x++;
@@ -363,7 +368,7 @@ bool SRecordParser::ParseLine( unsigned lineNum, const char *line )
 
          unsigned char *x = data;
 
-         for ( int addrIdx = 0; addrIdx < sRecData.m_addrLen; addrIdx++ ) 
+         for ( unsigned int addrIdx = 0; addrIdx < sRecData.m_addrLen; addrIdx++ ) 
          {
             sRecData.m_addr <<= 8;
             sRecData.m_addr += *x++;

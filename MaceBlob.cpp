@@ -30,7 +30,7 @@ bool MaceBlob::addData(unsigned char* inData, unsigned int len)
 
 MaceBlob::~MaceBlob()
 {
-    for (int i = 0; i < data.size(); i++)
+    for (unsigned int i = 0; i < data.size(); i++)
     {
         delete data[i];
     }
@@ -54,6 +54,7 @@ MaceBlob& MaceBlob::operator= (const MaceBlob &other)
     algoId = other.algoId;
     data = other.data;
     numRecords = other.numRecords;
+	return *this;
 }
 unsigned int MaceBlob::getNextDataLen()
 {
