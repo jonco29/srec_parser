@@ -18,6 +18,7 @@ class uCryptrInterfaceWindows : public uCryptrInterface
         virtual bool sendRawNoRx(unsigned char* data, unsigned int len, int sleepVal=0);
         virtual void resetUC();
         virtual unsigned char* getResponse(unsigned int *len);
+        void setCallBackReceiver(CTRANS_RECEIVER_INFO_T  cb);
     protected:
         virtual bool rxData();
 
@@ -34,6 +35,7 @@ class uCryptrInterfaceWindows : public uCryptrInterface
 
         SPGC_LIB_CONFIG_PARAM_T * configParametersPtr ;
         UINT32 configParameterCount;
+        CTRANS_RECEIVER_INFO_T callbackReceiver;
 
 
 

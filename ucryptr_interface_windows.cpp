@@ -24,14 +24,24 @@ uCryptrInterfaceWindows::uCryptrInterfaceWindows()
     rxSemaphore = CreateSemaphore(NULL, 0, 10, NULL);
 
     // setup callbacks
+    // callbackReceiver.messageReceivedCallback = messageReceivedCallbackPrint;
+    // callbackReceiver.linkEventOccurredCallback = linkEventOccurredCallbackPrint;
+    // callbackReceiver.loggingCallback = loggingCallbackPrint;
+
+    // // setup the transport
+    // CTransInitialize(configParameterCount, configParametersPtr, callbackReceiver);
+}
+
+void uCryptrInterfaceWindows::setCallBackReceiver(CTRANS_RECEIVER_INFO_T  cb)
+{
+    callbackReceiver = cb;
+    // setup the transport
     callbackReceiver.messageReceivedCallback = messageReceivedCallbackPrint;
     callbackReceiver.linkEventOccurredCallback = linkEventOccurredCallbackPrint;
     callbackReceiver.loggingCallback = loggingCallbackPrint;
-
-    // setup the transport
     CTransInitialize(configParameterCount, configParametersPtr, callbackReceiver);
-}
 
+}
 
 uCryptrInterfaceWindows* uCryptrInterfaceWindows::getCryptrInterface()
 {
