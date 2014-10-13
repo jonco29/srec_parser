@@ -21,13 +21,15 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifndef WIN32
 #include <sys/unistd.h>
+#endif
 
 
 #include "srec.h"
 #include "SRecMem.h"
 #include "srec2mem.h"
-#include "ucryptr_interface.h"
+//#include "ucryptr_interface.h"
 
 /* ---- Public Variables ------------------------------------------------- */
 /* ---- Private Constants and Types -------------------------------------- */
@@ -116,7 +118,7 @@ bool SRecord2Mem::openFile(const char* fileName)
    {
       return false;
    }
-   fd = fileno(fs);
+   fd = _fileno(fs);
 
    struct stat stat_buf;
    int rc = fstat(fd, &stat_buf);
@@ -138,11 +140,11 @@ int SRecord2Mem::getNextData(unsigned char** ptr, int reqLen)
 {
     int len = 0;
 
-    if (reqLen <= (mLength - currentDataOffset))
+    if ((unsigned int)reqLen <= (mLength - currentDataOffset))
     {
         len = reqLen;
     }
-    else if (reqLen > (mLength - currentDataOffset))
+    else if ((unsigned int)reqLen > (mLength - currentDataOffset))
     {
         len = (mLength - currentDataOffset);
     }

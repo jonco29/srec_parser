@@ -24,30 +24,18 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\MaceBlob.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\srec.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SRecMem.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="..\ucryptr_interface.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
+    <ClCompile Include="..\upgrade.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SrecParser.cpp">
+    <ClCompile Include="..\ucryptr_interface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\MaceBlob.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\srec.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\srecinfo.cpp">
+    <ClCompile Include="..\ucryptr_interface_windows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -22,13 +22,15 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifndef WIN32
 #include <sys/unistd.h>
+#endif
 
 
 #include "srec.h"
 #include "SRecMem.h"
 #include "combinedSrec2mem.h"
-#include "ucryptr_interface.h"
+//#include "ucryptr_interface.h"
 
 using namespace std;
 /* ---- Public Variables ------------------------------------------------- */
@@ -80,7 +82,7 @@ CombinedSRecord2Mem::CombinedSRecord2Mem(const char* fileName)
     }
     else
     {
-        exit ;
+        exit (1);
     }
 }
 
@@ -115,7 +117,6 @@ bool  CombinedSRecord2Mem::Data( const SRecordData *sRecData )
         {
             unsigned char numImages = sRecData->m_data[0];
             int i;
-            int j;
             int dataIndex = 1;
             unsigned int addr;
             for (i = 0; i < numImages; i++)
@@ -190,7 +191,7 @@ bool CombinedSRecord2Mem::openFile(const char* fileName)
    {
       return false;
    }
-   fd = fileno(fs);
+   fd = _fileno(fs);
 
    struct stat stat_buf;
    int rc = fstat(fd, &stat_buf);
@@ -242,6 +243,7 @@ CombinedSrecImageHeader::~CombinedSrecImageHeader()
 bool  CombinedSrecImageHeader::Data( const SRecordData *sRecData )
 {
     memcpy(&data[16], sRecData->m_data, sRecData->m_dataLen);
+	return true;
 }
 unsigned char* CombinedSrecImageHeader::getData()
 {
@@ -278,6 +280,7 @@ CombinedSrecImageData& CombinedSrecImageData::operator= (const CombinedSrecImage
     nextAddress = other.nextAddress;
     memcpy(header, other.header, 32);
     blob = other.blob;
+	return *this;
 }
 void CombinedSrecImageData::setNextAddr(unsigned int addr)
 {

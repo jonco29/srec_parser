@@ -20,43 +20,42 @@ typedef struct PACKED
     unsigned char   data[1];
 } UCRYPTR_PAYLOAD_t;
 
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
-#define DEV_UCRYPTR "/dev/cryptr_micro0"
-#define POWERUP_TIMEOUT 30
-#define FILE_ACCESS_RETRY_DELAY 1
-#define SLEEP_FOR 1
-#define UC_READ_LEN 1024
-
+// #define DEV_UCRYPTR "/dev/cryptr_micro0"
+// #define POWERUP_TIMEOUT 30
+// #define FILE_ACCESS_RETRY_DELAY 1
+// #define SLEEP_FOR 1
+// #define UC_READ_LEN 1024
+// 
 #define MACE_DOWNLOAD_COMPLETE  0x59
 
-#define MMCHWRESET 0x5801
+// #define MMCHWRESET 0x5801
 
 
 
 class uCryptrInterface 
 {
     public:
-        uCryptrInterface(bool isBlank=false);
-        ~uCryptrInterface() {};
+        uCryptrInterface() {};
+        virtual ~uCryptrInterface() {};
 
-        bool isReady();
+        virtual bool isReady() = 0;
+        virtual bool sendRaw(unsigned char* data, unsigned int len, int sleepVal=0) = 0;
+        virtual bool sendRawNoRx(unsigned char* data, unsigned int len, int sleepVal=0) = 0;
+        virtual void resetUC() = 0;
+        virtual unsigned char* getResponse(unsigned int *len) = 0;
+
         char *formatData(unsigned char* data, int *len, unsigned char opcode = 'S');
         bool sendMACEboot();
         bool sendMACEDownloadComplete();
-        bool send(UCRYPTR_PAYLOAD_t* data);
-        bool sendRaw(unsigned char* data, unsigned int len, int sleepVal=0);
-        bool sendRawNoRx(unsigned char* data, unsigned int len, int sleepVal=0);
-        unsigned char* getResponse(unsigned int *len);
-        void resetUC();
-    private:
-        unsigned char* readData;
-        bool blank;
-        bool rxData();
-        void cleanupReadData();
-        char asciiVal(unsigned char val);
-        unsigned char sendData[4000];
-        ssize_t readLen;
 
+        // not used or implemented
+        bool send(UCRYPTR_PAYLOAD_t* data);
+    private:
+        char asciiVal(unsigned char val);
 };
 
 
