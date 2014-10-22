@@ -6,6 +6,27 @@
 #ifndef UCRYPTR_INTERFACE_WINDOWS_H
 #define UCRYPTR_INTERFACE_WINDOWS_H
 
+#ifndef _MSC_VER
+#define PACKED __attribute__ ((__packed__))
+#else
+#define PACKED
+#pragma pack(push, 1)
+#endif
+
+
+typedef struct PACKED
+{
+    UINT16 fid;
+    UINT16 opcode;
+    UINT32 tag_id;
+    UINT8  message_flags;
+    UINT8 reserved;
+    UINT16 payload_size;
+} SDIO_COMMON_MSG;
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
 class uCryptrInterfaceWindows : public uCryptrInterface 
 {
@@ -32,6 +53,7 @@ class uCryptrInterfaceWindows : public uCryptrInterface
         void cleanupReadData();
         void notifyRx();
         HANDLE rxSemaphore;
+        UINT32 last_tag_id;
 
         SPGC_LIB_CONFIG_PARAM_T * configParametersPtr ;
         UINT32 configParameterCount;
@@ -43,6 +65,7 @@ class uCryptrInterfaceWindows : public uCryptrInterface
         static VOID messageReceivedCallbackPrint(const  UINT8 * buffer, UINT32 bufferLength);
         static VOID linkEventOccurredCallbackPrint(UINT32 eventType, UINT8* eventData, UINT32 eventDataLength);
         static VOID loggingCallbackPrint(UINT32 errorCode, TCHAR *location, UINT8 loggingLevel, VOID * m1, VOID * m2, VOID * m3);
+        static HANDLE gMutex;
 };
 
 static CTRANS_RECEIVER_INFO_T callbackReceiver;

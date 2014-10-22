@@ -187,17 +187,17 @@ int main (int argc, char** argv)
         cout << "uCryptR is NOT ready........." << endl;
         return 1;
     }
-    cout << "test with my own, canned message\n";
-    current_msg_ptr = module_info_request;
-    uc->sendRawNoRx(current_msg_ptr, sizeof(module_info_request));
-    cout << "done testing with my own, canned message\n";
+    // cout << "test with my own, canned message\n";
+    // current_msg_ptr = module_info_request;
+    // uc->sendRawNoRx(current_msg_ptr, sizeof(module_info_request));
+    // cout << "done testing with my own, canned message\n";
 
 
     doUpgrade(uc, srec);
 
 
     delete srec;
-    cout <<"all done....\n";
+    cout <<"\nall done....\n";
 }
 
 void doUpgrade(uCryptrInterface *uc, CombinedSRecord2Mem* srec)
@@ -223,23 +223,27 @@ void doUpgrade(uCryptrInterface *uc, CombinedSRecord2Mem* srec)
         {
             case BB_3X:
             {
+                cout <<"\nProgramming Boot Block\n";
                 programBootBlock(uc, m);
                 progModeEntered = false;
                 break;
             }
             case A7:
             {
+                cout <<"\nProgramming ARM7 application\n";
                 // same flow as arm7
                 programARM9(uc, m);
                 break;
             }
             case A9:
             {
+                cout <<"\nProgramming ARM9 application\n";
                 programARM9(uc, m);
                 break;
             }
             case ALG:
             {
+                cout <<"\nProgramming Algorithms\n";
                 programAlgos(uc, m, algoStarted);
                 algoStarted = true;
                 break;
@@ -249,7 +253,7 @@ void doUpgrade(uCryptrInterface *uc, CombinedSRecord2Mem* srec)
     if (progModeEntered == true)
     {
         unsigned int len = 0;
-        cout << "sending d/l complte\n";
+        cout << "\nsending d/l complte\n";
         sendData = createDownLoadComplete(&len);
         //uc->sendRaw( (unsigned char*)sendData, len);
         if (uc->sendRawNoRx(sendData, len))
@@ -271,14 +275,16 @@ void doUpgrade(uCryptrInterface *uc, CombinedSRecord2Mem* srec)
 unsigned char* createStartImage(unsigned int  id, unsigned short algoId, int* len)
 {
     *len = 6;
-    unsigned char* msg = new unsigned char[*len];
-    msg[0] = PAL_CTRL_BYTE;
-    msg[1] = START_IMAGE_OPCODE;
-    msg[2] = 0;
-    msg[3] = id;
-    msg[4] = (algoId >> 8 ) & 0xff;
-    msg[5] = (algoId >> 0 ) & 0xff;
-    return msg;
+    //unsigned char* msg = new unsigned char[*len];
+    unsigned char* startImageMsg = new unsigned char[20];
+    memset(startImageMsg, 0, 6);
+    startImageMsg[0] = PAL_CTRL_BYTE;
+    startImageMsg[1] = START_IMAGE_OPCODE;
+    startImageMsg[2] = 0;
+    startImageMsg[3] = id;
+    startImageMsg[4] = (algoId >> 8 ) & 0xff;
+    startImageMsg[5] = (algoId >> 0 ) & 0xff;
+    return startImageMsg;
 }
 
 unsigned char* createDataDownload(unsigned char* inData, unsigned int* len)
@@ -323,6 +329,8 @@ void enterProgMode(uCryptrInterface *uc)
     unsigned int readLen = 0;
     bool appMode = false;
 
+    printf("\nentering program mode\n");
+
     // first send a link setup
     msg[0] = 0x80;
     msg[1] = 0x01;
@@ -336,7 +344,7 @@ void enterProgMode(uCryptrInterface *uc)
     {
         exit(1);
     }
-    if(response[0] == 0x80)
+    if(response[12] == 0x80)
     {
         appMode = true;
     }
@@ -347,7 +355,11 @@ void enterProgMode(uCryptrInterface *uc)
     msg[0] = 0x30;
     msg[1] = ENTER_PROGRAMMING_MODE_OPCODE;
     msg[2] = 0;
-    printf ("entering programming mode\n");
+    if (appMode == true)
+    {
+        printf ("\nentering programming mode -- eject card, and the program will exit. otherwise you will have to wait 30 or so seconds...\n");
+    }
+
     //uc->sendRaw( msg, len);
     if (uc->sendRawNoRx(msg, len))
     {
@@ -386,7 +398,7 @@ void eraseSlots(uCryptrInterface *uc)
     for (i = 0; i < 8; i++)
     {
         msg[3] = i & 0xff;
-        printf ("erasing slot id: 0x%02X, and waiting 1 second for the write\n", i);
+        printf ("erasing slot id: 0x%02X\n", i);
         //uc->sendRaw( msg, len, 3);
         if (uc->sendRawNoRx(msg, len, 3))
         {
@@ -397,7 +409,7 @@ void eraseSlots(uCryptrInterface *uc)
         {
             exit(1);
         }
-        printf ("done erasing slot id: 0x%02X\n", i);
+        printf ("\ndone erasing slot id: 0x%02X\n", i);
     }
     delete msg;
 }
@@ -411,7 +423,7 @@ void createEraseAppImage(uCryptrInterface *uc, unsigned char id)
     msg[1] = ERASE_APP_AREA_OPCODE;
     msg[2] = 0;
     msg[3] = id;
-    printf ("erasing image id: 0x%02X, and waiting 7 seconds for the write\n", id);
+    printf ("erasing image id: 0x%02X, this will take several seconds for the write\n", id);
     //uc->sendRaw( msg, len, 7);
     if (uc->sendRawNoRx(msg, len, 7))
     {
@@ -422,7 +434,7 @@ void createEraseAppImage(uCryptrInterface *uc, unsigned char id)
     {
         exit(1);
     }
-    printf ("done erasing image\n");
+    printf ("\ndone erasing image\n");
     delete msg;
 }
 
@@ -487,15 +499,15 @@ void programBootBlock(uCryptrInterface *uc, MaceBlob *m)
     int bogus = 0;
     while( (len = getNextUpgradeData(m, &data, reqLen)) > 0)
     {
-        unsigned int i = 0;
-        for (i = 0; i < len; i++)
-        {
-            printf("%02X", data[i]);
-            if ((i+1) %16 == 0)
-            {
-                cout << endl;
-            }
-        }
+        // unsigned int i = 0;
+        // for (i = 0; i < len; i++)
+        // {
+        //     printf("%02X", data[i]);
+        //     if ((i+1) %16 == 0)
+        //     {
+        //         cout << endl;
+        //     }
+        // }
         sendData = createDataDownload(data, &len);
         //uc->sendRaw ((unsigned char*)sendData, len);
         if ( uc->sendRawNoRx( sendData, len))
@@ -523,7 +535,7 @@ void programBootBlock(uCryptrInterface *uc, MaceBlob *m)
     }
     delete sendData;
 
-    cout << "sending d/l complte\n";
+    cout << "\nsending d/l complte\n";
     sendData = createDownLoadComplete(&len);
     //uc->sendRaw( (unsigned char*)sendData, len);
     if (uc->sendRawNoRx(sendData, len))
@@ -537,11 +549,10 @@ void programBootBlock(uCryptrInterface *uc, MaceBlob *m)
     }
     delete sendData;
 
-    cout << "resettin, should take about 7 seconds to get up and running....\n";
-    mySleep (1);
+    cout << "\nresetting, should take several seconds to get up and running:\n";
     uc->resetUC();
     mySleep (1);
-    uc->resetUC();
+    //uc->resetUC();
     //while (true)
     //{
     //    cout << "now you need to eject the card and re-insert twice:\n";
@@ -631,7 +642,7 @@ void programARM9(uCryptrInterface *uc, MaceBlob *m)
         exit(1);
     }
     delete sendData;
-    printf("done programming app id: 0x%02X\n", m->getId());
+    printf("\ndone programming app id: 0x%02X\n", m->getId());
 }
 
 void programAlgos(uCryptrInterface *uc, MaceBlob *m, bool algoErased)
@@ -712,7 +723,7 @@ void programAlgos(uCryptrInterface *uc, MaceBlob *m, bool algoErased)
     }
     delete sendData;
 
-    printf("done programming algo id: 0x%02X\n", m->getAlgoId());
+    printf("\ndone programming algo id: 0x%02X\n", m->getAlgoId());
 
 }
 
