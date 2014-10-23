@@ -59,10 +59,33 @@ bool uCryptrInterface::sendMACEDownloadComplete()
     return sendRaw(data,len);
 }
 
-bool uCryptrInterface::send(UCRYPTR_PAYLOAD_t* data)
+
+bool uCryptrInterface::send(unsigned char* data, unsigned int len, int sleepVal)
 {
-    bool status = false;
-    return status;
+    bool retVal = sendNoRx(data, len, sleepVal);
+    if (retVal)
+    {
+        retVal = rxData();
+    }
+    return retVal;
+
+}
+bool uCryptrInterface::sendNoRx(unsigned char* data, unsigned int len, int sleepVal)
+{
+    unsigned char *sendData = new unsigned char[len + 32];
+    bool retVal = false;
+    SDIO_COMMON_MSG *fid_hdr = (SDIO_COMMON_MSG*)sendData;
+    memset(sendData, 0, sizeof(SDIO_COMMON_MSG));
+    fid_hdr->tag_id = last_tag_id;
+    last_tag_id++;
+    unsigned char* txData2 = (unsigned char*)(fid_hdr + 1);
+    memcpy(txData2, data, len);
+    fid_hdr->payload_size = len;
+    len += sizeof(SDIO_COMMON_MSG);
+
+    retVal =  sendRawNoRx(sendData, len, sleepVal);
+    delete sendData;
+    return retVal;
 }
 
 

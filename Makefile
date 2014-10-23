@@ -2,6 +2,7 @@ GCC = /usr/bin/g++-4.8 -g
 OBJECTS = \
 		  srec.o \
 		  ucryptr_interface.o \
+		  ucryptr_interface_linux.o \
 		  srec2mem.o \
 		  combinedSrec2mem.o \
 		  MaceBlob.o
@@ -24,7 +25,7 @@ combinedSrec2mem: combinedSrecTester.o srec2mem.o ucryptr_interface.o MaceBlob.o
 blank_flash: blank_flash.o srec2mem.o ucryptr_interface.o MaceBlob.o
 	$(GCC)  $(OBJECTS) $< -o $@
 
-upgrade: upgrade.o srec2mem.o ucryptr_interface.o MaceBlob.o
+upgrade: upgrade.o srec2mem.o ucryptr_interface.o ucryptr_interface_linux.o MaceBlob.o
 	$(GCC)  $(OBJECTS) $< -o $@
 
 
@@ -32,6 +33,7 @@ srec2c.o: SRecMem.h srec.h $(OBJECTS)
 srec2mem.o: SRecMem.h $(OBJECTS) 
 combinedSrec2mem.o:  SRecMem.h $(OBJECTS) 
 ucryptr_interface.o: ucryptr_interface.h
+ucryptr_interface_linux.o: ucryptr_interface_linux.h
 flashloader.o: ucryptr_interface.h
 MaceBlob.o: MaceBlob.h
 

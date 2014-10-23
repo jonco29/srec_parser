@@ -3,18 +3,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifndef WIN32
 #include <unistd.h>
 #include "ucryptr_interface_linux.h"
 #else
 #include <Windows.h>
 #include "ucryptr_interface_windows.h"
-#endif
-#include "combinedSrec2mem.h"
-#include "MaceBlob.h"
 #include "crypto_transport_service.h"
 #include "spgc_types.h"
 #include <Events.h>
+#endif
+
+#include "combinedSrec2mem.h"
+#include "MaceBlob.h"
 
 
 using namespace std;
@@ -85,88 +87,23 @@ void programARM9(uCryptrInterface *uc, MaceBlob *m);
 void programAlgos(uCryptrInterface *uc, MaceBlob *m, bool algoErased);
 
 
-UCHAR *current_msg_ptr = NULL;
 
-UINT8 module_info_request[] =     {0x80, 0x01, 0x82, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
-
-
-int i = 0;
-VOID messageReceivedCallbackPrint(const  UINT8 * buffer, UINT32 bufferLength)
-{
-    printf_s("JONATHAN ------------  messageReceivedCallbackPrint ::::::::::::  Callback: Received %d bytes\n", bufferLength);
-    if ( *(UINT32 *) &buffer[4] == *(UINT32 *) &current_msg_ptr[4]) {
-       printf_s ("**********iteration 0x%X matches! Value 0x%X\n", i, *(UINT32 *) &buffer[4]);    
-    } else {
-       printf_s ("!!!!!!!!!iteration 0x%X does not match! Value  0x%X \n",  i, *(UINT32 *) &buffer[4]);
-    }
-    return;
-}
-
-VOID linkEventOccurredCallbackPrint(UINT32 eventType, UINT8* eventData, UINT32 eventDataLength)
-{
-	if (eventType == EXTERNAL_EVENT_ID_LINK_UP) {
-		printf_s("JONATHAN ------------  linkEventOccurredCallbackPrint ::::::::::::  LINK IS UP!!!!!!!!!          Callback\n");
-	} else if (eventType == EXTERNAL_EVENT_ID_LINK_DOWN) {
-		printf_s("JONATHAN ------------  linkEventOccurredCallbackPrint ::::::::::::  LINK IS DOWN :'(   wahhhh!!! Callback\n");
-	}
-    return;
-}
-
-
-VOID loggingCallbackPrint(UINT32 errorCode, TCHAR *location, UINT8 loggingLevel, VOID * m1, VOID * m2, VOID * m3)
-
-{
-    int i = 0;
-
-    switch(errorCode)
-    {
-        case SPGC_LOG_CODE_TRANSPORT_EVENT:
-        {
-            break;
-        }
-        case SPGC_LOG_CODE_TRANSPORT_DATA_OUT:
-        {
-			printf_s("JONATHAN ------------  loggingCallbackPrint ::::::::::::  Callback\n" );
-            printf_s(("%s traced buffer of length %x [out] "), location, (int) m2);
-
-            for(i=0; (i < (int) m2); i++)
-            {
-                printf_s((" %02X"), ((UINT8 *)m1)[i]);
-            }
-            printf_s("\n");
-            break;
-        }
-        case SPGC_LOG_CODE_TRANSPORT_DATA_IN:
-        {
-			printf_s("JONATHAN ------------  loggingCallbackPrint ::::::::::::  Callback\n" );
-            printf_s(("%s traced buffer of length %x [in] "), location, (int) m2);
-
-            for(i=0; (i < (int) m2); i++)
-            {
-                printf_s((" %02X"), ((UINT8 *)m1)[i]);
-            }
-            printf_s("\n");
-            break;
-        }
-        default:
-        break;
-    }
-    return ;
-}
 int main (int argc, char** argv)
 {
+#ifdef WIN32
     uCryptrInterfaceWindows *uc = uCryptrInterfaceWindows::getCryptrInterface();
+#else
+    uCryptrInterfaceLinux *uc = new uCryptrInterfaceLinux();
+#endif
+
     CombinedSRecord2Mem *srec = 0;
+#ifdef WIN32
     CTRANS_RECEIVER_INFO_T callbackReceiver;
-    // callbackReceiver.messageReceivedCallback = messageReceivedCallbackPrint;
-    // callbackReceiver.linkEventOccurredCallback = linkEventOccurredCallbackPrint;
-    // callbackReceiver.loggingCallback = loggingCallbackPrint;
     callbackReceiver.messageReceivedCallback = 0;
     callbackReceiver.linkEventOccurredCallback = 0;
     callbackReceiver.loggingCallback = 0;
     uc->setCallBackReceiver(callbackReceiver);
+#endif
 
     if (argc != 2)
     {
@@ -189,7 +126,7 @@ int main (int argc, char** argv)
     }
     // cout << "test with my own, canned message\n";
     // current_msg_ptr = module_info_request;
-    // uc->sendRawNoRx(current_msg_ptr, sizeof(module_info_request));
+    // uc->sendNoRx(current_msg_ptr, sizeof(module_info_request));
     // cout << "done testing with my own, canned message\n";
 
 
@@ -255,8 +192,7 @@ void doUpgrade(uCryptrInterface *uc, CombinedSRecord2Mem* srec)
         unsigned int len = 0;
         cout << "\nsending d/l complte\n";
         sendData = createDownLoadComplete(&len);
-        //uc->sendRaw( (unsigned char*)sendData, len);
-        if (uc->sendRawNoRx(sendData, len))
+        if (uc->sendNoRx(sendData, len))
         {
             response = uc->getResponse(&readLen);
             delete response;
@@ -335,8 +271,7 @@ void enterProgMode(uCryptrInterface *uc)
     msg[0] = 0x80;
     msg[1] = 0x01;
     msg[2] = 0x82;
-    //uc->sendRaw( msg, len);
-    if (uc->sendRawNoRx(msg, len))
+    if (uc->sendNoRx(msg, len))
     {
         response = uc->getResponse(&readLen);
     }
@@ -360,8 +295,7 @@ void enterProgMode(uCryptrInterface *uc)
         printf ("\nentering programming mode -- eject card, and the program will exit. otherwise you will have to wait 30 or so seconds...\n");
     }
 
-    //uc->sendRaw( msg, len);
-    if (uc->sendRawNoRx(msg, len))
+    if (uc->sendNoRx(msg, len))
     {
         if (appMode == false)
         {
@@ -399,8 +333,7 @@ void eraseSlots(uCryptrInterface *uc)
     {
         msg[3] = i & 0xff;
         printf ("erasing slot id: 0x%02X\n", i);
-        //uc->sendRaw( msg, len, 3);
-        if (uc->sendRawNoRx(msg, len, 3))
+        if (uc->sendNoRx(msg, len, 3))
         {
             response = uc->getResponse(&readLen);
             delete response;
@@ -424,8 +357,7 @@ void createEraseAppImage(uCryptrInterface *uc, unsigned char id)
     msg[2] = 0;
     msg[3] = id;
     printf ("erasing image id: 0x%02X, this will take several seconds for the write\n", id);
-    //uc->sendRaw( msg, len, 7);
-    if (uc->sendRawNoRx(msg, len, 7))
+    if (uc->sendNoRx(msg, len, 7))
     {
         response = uc->getResponse(&readLen);
         delete response;
@@ -484,8 +416,7 @@ void programBootBlock(uCryptrInterface *uc, MaceBlob *m)
     createEraseAppImage(uc, A9);
 
     sendData = createStartImage(m->getId(), m->getAlgoId(),  &xferLen);
-    //uc->sendRaw( sendData, xferLen);
-    if ( uc->sendRawNoRx( sendData, xferLen))
+    if ( uc->sendNoRx( sendData, xferLen))
     {
         response = uc->getResponse(&readLen);
         delete response;
@@ -509,8 +440,7 @@ void programBootBlock(uCryptrInterface *uc, MaceBlob *m)
         //     }
         // }
         sendData = createDataDownload(data, &len);
-        //uc->sendRaw ((unsigned char*)sendData, len);
-        if ( uc->sendRawNoRx( sendData, len))
+        if ( uc->sendNoRx( sendData, len))
         {
             response = uc->getResponse(&readLen);
             delete response;
@@ -523,8 +453,7 @@ void programBootBlock(uCryptrInterface *uc, MaceBlob *m)
     // send wait for next image
     sendData = createWaitForNextImage(&len);
     cout << "sending wait for next image and sleeping 5 seconds to validate the image before d/l complete\n";
-    // uc->sendRaw( (unsigned char*)sendData, len, 5);
-    if (uc->sendRawNoRx(sendData, len, 5))
+    if (uc->sendNoRx(sendData, len, 5))
     {
         response = uc->getResponse(&readLen);
         delete response;
@@ -537,8 +466,7 @@ void programBootBlock(uCryptrInterface *uc, MaceBlob *m)
 
     cout << "\nsending d/l complte\n";
     sendData = createDownLoadComplete(&len);
-    //uc->sendRaw( (unsigned char*)sendData, len);
-    if (uc->sendRawNoRx(sendData, len))
+    if (uc->sendNoRx(sendData, len))
     {
         response = uc->getResponse(&readLen);
         delete response;
@@ -585,8 +513,7 @@ void programARM9(uCryptrInterface *uc, MaceBlob *m)
     createEraseAppImage(uc, m->getId());
 
     sendData = createStartImage(m->getId(), m->getAlgoId(),  &xferLen);
-    // uc->sendRaw( sendData, xferLen);
-    if (uc->sendRawNoRx(sendData, xferLen))
+    if (uc->sendNoRx(sendData, xferLen))
     {
         response = uc->getResponse(&readLen);
         delete response;
@@ -614,8 +541,7 @@ void programARM9(uCryptrInterface *uc, MaceBlob *m)
         //     }
         // }
         sendData = createDataDownload(data, &len);
-        //uc->sendRaw ((unsigned char*)sendData, len);
-        if (uc->sendRawNoRx(sendData, len))
+        if (uc->sendNoRx(sendData, len))
         {
             response = uc->getResponse(&readLen);
             delete response;
@@ -631,8 +557,7 @@ void programARM9(uCryptrInterface *uc, MaceBlob *m)
     len = 0;
     // send wait for next image
     sendData = createWaitForNextImage(&len);
-    //uc->sendRaw( (unsigned char*)sendData, len);
-    if (uc->sendRawNoRx(sendData, len))
+    if (uc->sendNoRx(sendData, len))
     {
         response = uc->getResponse(&readLen);
         delete response;
@@ -665,8 +590,7 @@ void programAlgos(uCryptrInterface *uc, MaceBlob *m, bool algoErased)
     }
 
     sendData = createStartImage(m->getId(), m->getAlgoId(),  &xferLen);
-    //uc->sendRaw( sendData, xferLen);
-    if (uc->sendRawNoRx(sendData, xferLen))
+    if (uc->sendNoRx(sendData, xferLen))
     {
         response = uc->getResponse(&readLen);
         delete response;
@@ -694,8 +618,7 @@ void programAlgos(uCryptrInterface *uc, MaceBlob *m, bool algoErased)
         //     }
         // }
         sendData = createDataDownload(data, &len);
-        // uc->sendRaw ((unsigned char*)sendData, len);
-        if (uc->sendRawNoRx(sendData, len))
+        if (uc->sendNoRx(sendData, len))
         {
             response = uc->getResponse(&readLen);
             delete response;
@@ -711,8 +634,7 @@ void programAlgos(uCryptrInterface *uc, MaceBlob *m, bool algoErased)
     len = 0;
     // send wait for next image
     sendData = createWaitForNextImage(&len);
-    // uc->sendRaw( (unsigned char*)sendData, len);
-    if (uc->sendRawNoRx(sendData, len))
+    if (uc->sendNoRx(sendData, len))
     {
         response = uc->getResponse(&readLen);
         delete response;

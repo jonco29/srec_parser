@@ -118,7 +118,11 @@ bool SRecord2Mem::openFile(const char* fileName)
    {
       return false;
    }
+#ifdef WIN32
    fd = _fileno(fs);
+#else
+   fd = fileno(fs);
+#endif
 
    struct stat stat_buf;
    int rc = fstat(fd, &stat_buf);

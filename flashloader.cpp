@@ -2,7 +2,7 @@
 #include <string>
 #include <stdio.h>
 #include <string.h>
-#include "ucryptr_interface.h"
+#include "ucryptr_interface_linux.h"
 #include "srec2mem.h"
 #include "unistd.h"
 
@@ -14,7 +14,7 @@ bool doBootBlock(char* arg, uCryptrInterface &uc);
 int main (int argc, char** argv)
 {
     FILE *fstream;
-    uCryptrInterface uc;
+    uCryptrInterfaceLinux uc(true);
     if (argc != 3)
     {
         cout << "usage: " << argv[0] << " <flashloader.srec> <bootblock.srec>" << endl;

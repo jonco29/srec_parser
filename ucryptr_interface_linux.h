@@ -20,6 +20,7 @@ class uCryptrInterfaceLinux : public uCryptrInterface
         virtual bool isReady();
         virtual bool sendRaw(unsigned char* data, unsigned int len, int sleepVal=0);
         virtual bool sendRawNoRx(unsigned char* data, unsigned int len, int sleepVal=0);
+        virtual unsigned char* getResponse(unsigned int *len);
         virtual void resetUC();
     protected:
         virtual bool rxData();

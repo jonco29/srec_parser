@@ -20,6 +20,17 @@ typedef struct PACKED
     unsigned char   data[1];
 } UCRYPTR_PAYLOAD_t;
 
+
+typedef struct PACKED
+{
+    unsigned short  fid;
+    unsigned short  opcode;
+    unsigned int    tag_id;
+    unsigned char   message_flags;
+    unsigned char   reserved;
+    unsigned short  payload_size;
+} SDIO_COMMON_MSG;
+
 #ifdef _MSC_VER
 #pragma pack(pop)
 #endif
@@ -39,10 +50,12 @@ typedef struct PACKED
 class uCryptrInterface 
 {
     public:
-        uCryptrInterface() {};
+        uCryptrInterface() :last_tag_id(0)  {};
         virtual ~uCryptrInterface() {};
 
         virtual bool isReady() = 0;
+        virtual bool send(unsigned char* data, unsigned int len, int sleepVal=0);
+        virtual bool sendNoRx(unsigned char* data, unsigned int len, int sleepVal=0);
         virtual bool sendRaw(unsigned char* data, unsigned int len, int sleepVal=0) = 0;
         virtual bool sendRawNoRx(unsigned char* data, unsigned int len, int sleepVal=0) = 0;
         virtual void resetUC() = 0;
@@ -51,9 +64,12 @@ class uCryptrInterface
         char *formatData(unsigned char* data, int *len, unsigned char opcode = 'S');
         bool sendMACEboot();
         bool sendMACEDownloadComplete();
+        unsigned int last_tag_id;
+
+    protected:
+        virtual bool rxData() = 0;
 
         // not used or implemented
-        bool send(UCRYPTR_PAYLOAD_t* data);
     private:
         char asciiVal(unsigned char val);
 };

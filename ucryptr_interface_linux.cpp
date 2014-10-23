@@ -171,21 +171,24 @@ bool uCryptrInterfaceLinux::rxData()
 
 void uCryptrInterfaceLinux::resetUC()
 {
-    int fd = -1;
-    int status = 0;
+    char tmp;
+    cout << "\neject cryptr, have you done that y/n?";
+    cin >> tmp;
+    // int fd = -1;
+    // int status = 0;
 
 
-    if( 0 > (fd = open(DEV_UCRYPTR, O_RDWR))) 
-    {
-        perror("response_handler - Failed to open /dev/ucryptr0");
-    } 
-    else 
-    {
-        printf("resetting cryptr....\n");
-        status = ioctl(fd, MMCHWRESET, 0);
-        sleep(2);
-        printf("reset of cryptr is complete.  the status is: 0x%02X\n", status);
-    }
+    // if( 0 > (fd = open(DEV_UCRYPTR, O_RDWR))) 
+    // {
+    //     perror("response_handler - Failed to open /dev/ucryptr0");
+    // } 
+    // else 
+    // {
+    //     printf("resetting cryptr....\n");
+    //     status = ioctl(fd, MMCHWRESET, 0);
+    //     sleep(2);
+    //     printf("reset of cryptr is complete.  the status is: 0x%02X\n", status);
+    // }
 }
 
 void uCryptrInterfaceLinux::cleanupReadData()

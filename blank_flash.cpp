@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "ucryptr_interface.h"
+#include "ucryptr_interface_linux.h"
 #include "combinedSrec2mem.h"
 #include "MaceBlob.h"
 
@@ -16,7 +16,7 @@ bool doBootBlock(uCryptrInterface &uc, CombinedSRecord2Mem* srec);
 int main (int argc, char** argv)
 {
     FILE *fstream;
-    uCryptrInterface uc(true);
+    uCryptrInterfaceLinux uc(true);
     CombinedSRecord2Mem *srec = 0;
 
     if (argc != 2)
